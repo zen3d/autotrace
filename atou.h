@@ -4,6 +4,7 @@
 #define ATOU_H
 
 #include "types.h"
-unsigned atou (at_string s);
+
+unsigned atou(at_string s);
 
 #endif /* not ATOU_H */

@@ -13,10 +13,9 @@
    the former.)  Although the original (x,y)'s are pixel positions,
    i.e., integers, after filtering they are reals.  */
 
-typedef struct
-{
-  at_real_coord coord;
-  at_real t;
+typedef struct {
+    at_real_coord coord;
+    at_real t;
 } point_type;
 
 
@@ -24,15 +23,14 @@ typedef struct
    the outline into sublists, divided at ``corners''.  Then each of the
    sublists is treated independently.  Each of these sublists is a `curve'.  */
 
-struct curve
-{
-  point_type *point_list;
-  unsigned length;
-  at_bool cyclic;
-  vector_type *start_tangent;
-  vector_type *end_tangent;
-  struct curve *previous;
-  struct curve *next;
+struct curve {
+    point_type *point_list;
+    unsigned length;
+    at_bool cyclic;
+    vector_type *start_tangent;
+    vector_type *end_tangent;
+    struct curve *previous;
+    struct curve *next;
 };
 
 typedef struct curve *curve_type;
@@ -53,12 +51,12 @@ typedef struct curve *curve_type;
 /* If the curve is cyclic, the next and previous points should wrap
    around; otherwise, if we get to the end, we return CURVE_LENGTH and
    -1, respectively.  */
-#define CURVE_NEXT(c, n)						\
-  ((n) + 1 >= CURVE_LENGTH (c)						\
-  ? CURVE_CYCLIC (c) ? ((n) + 1) % CURVE_LENGTH (c) : CURVE_LENGTH (c)	\
+#define CURVE_NEXT(c, n)                        \
+  ((n) + 1 >= CURVE_LENGTH (c)                        \
+  ? CURVE_CYCLIC (c) ? ((n) + 1) % CURVE_LENGTH (c) : CURVE_LENGTH (c)    \
   : (n) + 1)
-#define CURVE_PREV(c, n)						\
-  ((signed int) (n) - 1 < 0							\
+#define CURVE_PREV(c, n)                        \
+  ((signed int) (n) - 1 < 0                            \
   ? CURVE_CYCLIC (c) ? (signed int) CURVE_LENGTH (c) + (signed int) (n) - 1 : -1\
   : (signed int) (n) - 1)
 
@@ -70,35 +68,35 @@ typedef struct curve *curve_type;
 
 
 /* Return an entirely empty curve.  */
-extern curve_type new_curve (void);
+extern curve_type new_curve(void);
 
 /* Return a curve the same as C, except without any points.  */
-extern curve_type copy_most_of_curve (curve_type c);
+extern curve_type copy_most_of_curve(curve_type c);
 
 /* Free the memory C uses.  */
-extern void free_curve (curve_type c);
+extern void free_curve(curve_type c);
 
 /* Append the point P to the end of C's list.  */
-extern void append_pixel (curve_type c, at_coord p);
+extern void append_pixel(curve_type c, at_coord p);
 
 /* Like `append_pixel', for a point in real coordinates.  */
-extern void append_point (curve_type c, at_real_coord p);
+extern void append_point(curve_type c, at_real_coord p);
 
 /* Write some or all, respectively, of the curve C in human-readable
    form to the log file, if logging is enabled.  */
-extern void log_curve (curve_type c, at_bool print_t);
-extern void log_entire_curve (curve_type c);
+extern void log_curve(curve_type c, at_bool print_t);
+
+extern void log_entire_curve(curve_type c);
 
 /* Display the curve C online, if displaying is enabled.  */
-extern void display_curve (curve_type);
+extern void display_curve(curve_type);
 
 /* So, an outline is a list of curves.  */
-typedef struct
-{
-  curve_type *data;
-  unsigned length;
-  at_bool clockwise;
-  at_bool open;
+typedef struct {
+    curve_type *data;
+    unsigned length;
+    at_bool clockwise;
+    at_bool open;
 } curve_list_type;
 
 /* Number of curves in the list.  */
@@ -113,17 +111,18 @@ typedef struct
 #define CURVE_LIST_CLOCKWISE(c_l) ((c_l).clockwise)
 
 
-extern curve_list_type new_curve_list (void);
-extern void free_curve_list (curve_list_type *);
-extern void append_curve (curve_list_type *, curve_type);
+extern curve_list_type new_curve_list(void);
+
+extern void free_curve_list(curve_list_type *);
+
+extern void append_curve(curve_list_type *, curve_type);
 
 /* And a character is a list of outlines.  I named this
    `curve_list_array_type' because `curve_list_list_type' seemed pretty
    monstrous.  */
-typedef struct
-{
-  curve_list_type *data;
-  unsigned length;
+typedef struct {
+    curve_list_type *data;
+    unsigned length;
 } curve_list_array_type;
 
 /* Turns out we can use the same definitions for lists of lists as for
@@ -132,11 +131,13 @@ typedef struct
 #define CURVE_LIST_ARRAY_ELT CURVE_LIST_ELT
 #define LAST_CURVE_LIST_ARRAY_ELT LAST_CURVE_LIST_ELT
 
-extern curve_list_array_type new_curve_list_array (void);
-extern void free_curve_list_array (curve_list_array_type *,
-				   at_progress_func, 
-				   at_address);
-extern void append_curve_list (curve_list_array_type *, curve_list_type);
+extern curve_list_array_type new_curve_list_array(void);
+
+extern void free_curve_list_array(curve_list_array_type *,
+                                  at_progress_func,
+                                  at_address);
+
+extern void append_curve_list(curve_list_array_type *, curve_list_type);
 
 #endif /* not CURVE_H */
 

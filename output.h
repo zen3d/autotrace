@@ -19,6 +19,7 @@
 
 #ifndef OUTPUT_H
 #define OUTPUT_H
+
 #include <stdio.h>
 #include "autotrace.h"
 #include "types.h"
@@ -35,23 +36,23 @@ extern "C" {
 
 /* Accessors to the Data member  */
 #define AT_SPLINE_START_POINT_VALUE(spl)      ((spl).v[0])
-#define AT_SPLINE_CONTROL1_VALUE(spl)	      ((spl).v[1])
+#define AT_SPLINE_CONTROL1_VALUE(spl)          ((spl).v[1])
 #define AT_SPLINE_CONTROL2_VALUE(spl)         ((spl).v[2])
 #define AT_SPLINE_END_POINT_VALUE(spl)        ((spl).v[3])
 #define AT_SPLINE_DEGREE_VALUE(spl)           ((spl).degree)
 
 #define AT_SPLINE_START_POINT(spl)            (&AT_SPLINE_START_POINT_VALUE(*(spl)))
-#define AT_SPLINE_CONTROL1(spl)	              (&AT_SPLINE_CONTROL1_VALUE(*(spl)))
+#define AT_SPLINE_CONTROL1(spl)                  (&AT_SPLINE_CONTROL1_VALUE(*(spl)))
 #define AT_SPLINE_CONTROL2(spl)               (&AT_SPLINE_CONTROL2_VALUE(*(spl)))
 #define AT_SPLINE_END_POINT(spl)              (&AT_SPLINE_END_POINT_VALUE(*(spl)))
-#define AT_SPLINE_DEGREE(spl)	              AT_SPLINE_DEGREE_VALUE(*(spl))
+#define AT_SPLINE_DEGREE(spl)                  AT_SPLINE_DEGREE_VALUE(*(spl))
 
 #define AT_SPLINE_LIST_LENGTH_VALUE(spll)     ((spll).length)
 #define AT_SPLINE_LIST_LENGTH(spll)           AT_SPLINE_LIST_LENGTH_VALUE(*(spll))
 #define AT_SPLINE_LIST_DATA_VALUE(spll)       ((spll).data)
 #define AT_SPLINE_LIST_DATA(spll)             AT_SPLINE_LIST_DATA_VALUE((*spll))
-#define AT_SPLINE_LIST_ELT_VALUE(spll,index)  AT_SPLINE_LIST_DATA_VALUE(spll)[(index)]
-#define AT_SPLINE_LIST_ELT(spll,index)        (&(AT_SPLINE_LIST_ELT_VALUE((*spll), (index))))
+#define AT_SPLINE_LIST_ELT_VALUE(spll, index)  AT_SPLINE_LIST_DATA_VALUE(spll)[(index)]
+#define AT_SPLINE_LIST_ELT(spll, index)        (&(AT_SPLINE_LIST_ELT_VALUE((*spll), (index))))
 #define AT_SPLINE_LIST_COLOR_VALUE(spll)      ((spll).color)
 #define AT_SPLINE_LIST_COLOR(spll)            (&(AT_SPLINE_LIST_COLOR_VALUE(*spll)))
 #define AT_SPLINE_LIST_IS_OPENED_VALUE(spll)  ((spll).open)
@@ -69,25 +70,27 @@ extern "C" {
  * Glib style traversing
  */
 
-typedef void (* AtSplineListForeachFunc) (at_spline_list_type * spline_list,
-					     at_spline_type * spline,
-					     int index,
-					     at_address user_data);
-typedef void (* AtSplineListArrayForeachFunc) (at_spline_list_array_type * spline_list_array,
-						  at_spline_list_type * spline_list,
-						  int index,
-						  at_address user_data);
+typedef void (*AtSplineListForeachFunc)(at_spline_list_type *spline_list,
+                                        at_spline_type *spline,
+                                        int index,
+                                        at_address user_data);
 
-void at_spline_list_foreach (at_spline_list_type *,
-			     AtSplineListForeachFunc func,
-			     at_address user_data);
-void at_spline_list_array_foreach (at_spline_list_array_type *,
-				   AtSplineListArrayForeachFunc func,
-				   at_address user_data);
+typedef void (*AtSplineListArrayForeachFunc)(at_spline_list_array_type *spline_list_array,
+                                             at_spline_list_type *spline_list,
+                                             int index,
+                                             at_address user_data);
 
-int   at_output_add_handler (at_string suffix, 
-			     at_string description, 
-			     at_output_write_func func);
+void at_spline_list_foreach(at_spline_list_type *,
+                            AtSplineListForeachFunc func,
+                            at_address user_data);
+
+void at_spline_list_array_foreach(at_spline_list_array_type *,
+                                  AtSplineListArrayForeachFunc func,
+                                  at_address user_data);
+
+int at_output_add_handler(at_string suffix,
+                          at_string description,
+                          at_output_write_func func);
 
 #ifdef __cplusplus
 }

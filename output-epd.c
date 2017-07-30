@@ -31,7 +31,7 @@
 #include <time.h>
 #include <string.h>
 
-static at_string now (void);
+static at_string now(void);
 
 #define SIGN(x) ((x) > 0 ? 1 : (x) < 0 ? -1 : 0)
 #define ROUND(x) ((int) ((int) (x) + .5 * SIGN (x)))
@@ -56,8 +56,8 @@ static at_string now (void);
   fprintf (epd_file, s, e1, e2, e3, e4)
 
 /* These macros just output their arguments.  */
-#define OUT_STRING(s)	fprintf (epd_file, "%s", s)
-#define OUT_REAL(r)	fprintf (epd_file, r == (ROUND (r = ROUND((at_real)6.0*r)/(at_real)6.0))				\
+#define OUT_STRING(s)    fprintf (epd_file, "%s", s)
+#define OUT_REAL(r)    fprintf (epd_file, r == (ROUND (r = ROUND((at_real)6.0*r)/(at_real)6.0))                \
                                   ? "%.0f " : "%.3f ", r)
 
 /* For a PostScript command with two real arguments, e.g., lineto.  OP
@@ -73,7 +73,7 @@ static at_string now (void);
 
 /* For a PostScript command with six real arguments, e.g., curveto.
    Again, OP should be a constant string.  */
-#define OUT_COMMAND6(first, second, third, fourth, fifth, sixth, op)	\
+#define OUT_COMMAND6(first, second, third, fourth, fifth, sixth, op)    \
   do                                                \
     {                                               \
       OUT_REAL (first);                             \
@@ -91,86 +91,79 @@ static at_string now (void);
 /* This should be called before the others in this file.  It opens the
    output file `OUTPUT_NAME.ps', and writes some preliminary boilerplate. */
 
-static int output_epd_header(FILE* epd_file, at_string name,
-			     int llx, int lly, int urx, int ury)
-{
-  at_string time;
+static int output_epd_header(FILE *epd_file, at_string name,
+                             int llx, int lly, int urx, int ury) {
+    at_string time;
 
-  OUT_LINE ("%EPD-1.0");
-  OUT1 ("%% Created by %s\n", at_version(true));
-  OUT1 ("%% Title: %s\n", name);
-  OUT1 ("%% CreationDate: %s\n", time = now ());
-  OUT4 ("%%BBox(%d,%d,%d,%d)\n", llx, lly, urx, ury);
+    OUT_LINE ("%EPD-1.0");
+    OUT1 ("%% Created by %s\n", at_version(true));
+    OUT1 ("%% Title: %s\n", name);
+    OUT1 ("%% CreationDate: %s\n", time = now());
+    OUT4 ("%%BBox(%d,%d,%d,%d)\n", llx, lly, urx, ury);
 
-  free (time);
+    free(time);
 
-  return 0;
+    return 0;
 }
 
 /* This outputs the PostScript code which produces the shape in
    SHAPE.  */
 
 static void
-out_splines (FILE * epd_file, spline_list_array_type shape)
-{
-  unsigned this_list;
-  spline_list_type list;
-  color_type last_color = {0,0,0};
+out_splines(FILE *epd_file, spline_list_array_type shape) {
+    unsigned this_list;
+    spline_list_type list;
+    color_type last_color = {0, 0, 0};
 
-  for (this_list = 0; this_list < SPLINE_LIST_ARRAY_LENGTH (shape);
-       this_list++)
-    {
-      unsigned this_spline;
-	  spline_type first;
+    for (this_list = 0; this_list < SPLINE_LIST_ARRAY_LENGTH (shape);
+         this_list++) {
+        unsigned this_spline;
+        spline_type first;
 
-      list = SPLINE_LIST_ARRAY_ELT (shape, this_list);
-      first = SPLINE_LIST_ELT (list, 0);
+        list = SPLINE_LIST_ARRAY_ELT (shape, this_list);
+        first = SPLINE_LIST_ELT (list, 0);
 
-      if (this_list == 0 || !COLOR_EQUAL(list.color, last_color))
-        {
-          if (this_list > 0)
-              {
+        if (this_list == 0 || !COLOR_EQUAL(list.color, last_color)) {
+            if (this_list > 0) {
                 OUT_LINE ((shape.centerline || list.open) ? "S" : "f");
                 OUT_LINE("h");
-              }
-          OUT4 ("%.3f %.3f %.3f %s\n", (double) list.color.r / 255.0,
-            (double) list.color.g / 255.0, (double) list.color.b / 255.0,
-            (shape.centerline || list.open) ? "RG" : "rg");
-          last_color = list.color;
-        }    
-      OUT_COMMAND2 (START_POINT (first).x, START_POINT (first).y, "m");
+            }
+            OUT4 ("%.3f %.3f %.3f %s\n", (double) list.color.r / 255.0,
+                  (double) list.color.g / 255.0, (double) list.color.b / 255.0,
+                  (shape.centerline || list.open) ? "RG" : "rg");
+            last_color = list.color;
+        }
+        OUT_COMMAND2 (START_POINT(first).x, START_POINT(first).y, "m");
 
-      for (this_spline = 0; this_spline < SPLINE_LIST_LENGTH (list);
-           this_spline++)
-        {
-          spline_type s = SPLINE_LIST_ELT (list, this_spline);
+        for (this_spline = 0; this_spline < SPLINE_LIST_LENGTH (list);
+             this_spline++) {
+            spline_type s = SPLINE_LIST_ELT (list, this_spline);
 
-          if (SPLINE_DEGREE (s) == LINEARTYPE)
-            OUT_COMMAND2 (END_POINT (s).x, END_POINT (s).y, "l");
-          else
-            OUT_COMMAND6 (CONTROL1 (s).x, CONTROL1 (s).y,
-                          CONTROL2 (s).x, CONTROL2 (s).y,
-                          END_POINT (s).x, END_POINT (s).y,
-                          "c");
+            if (SPLINE_DEGREE (s) == LINEARTYPE)
+                OUT_COMMAND2 (END_POINT(s).x, END_POINT(s).y, "l");
+            else
+                OUT_COMMAND6 (CONTROL1(s).x, CONTROL1(s).y,
+                              CONTROL2(s).x, CONTROL2(s).y,
+                              END_POINT(s).x, END_POINT(s).y,
+                              "c");
         }
     }
-  if (SPLINE_LIST_ARRAY_LENGTH(shape) > 0)
-    OUT_LINE ((shape.centerline || list.open) ? "S" : "f");
+    if (SPLINE_LIST_ARRAY_LENGTH(shape) > 0)
+        OUT_LINE ((shape.centerline || list.open) ? "S" : "f");
 }
 
 
-int output_epd_writer(FILE* epd_file, at_string name,
-		      int llx, int lly, int urx, int ury, 
-		      at_output_opts_type * opts,
-		      spline_list_array_type shape,
-		      at_msg_func msg_func, 
-		      at_address msg_data)
-{
+int output_epd_writer(FILE *epd_file, at_string name,
+                      int llx, int lly, int urx, int ury,
+                      at_output_opts_type *opts,
+                      spline_list_array_type shape,
+                      at_msg_func msg_func,
+                      at_address msg_data) {
     int result;
 
     result = output_epd_header(epd_file, name, llx, lly, urx, ury);
     if (result != 0)
-	return result;
+        return result;
 
     out_splines(epd_file, shape);
 
@@ -179,14 +172,13 @@ int output_epd_writer(FILE* epd_file, at_string name,
 
 
 static at_string
-now (void)
-{
-  at_string time_string;
-  time_t t = time (0);
+now(void) {
+    at_string time_string;
+    time_t t = time(0);
 
-  XMALLOC (time_string, 26); /* not 25 ! */
-  strcpy (time_string, ctime (&t));
-  time_string[24] = 0; /* No newline. */
+    XMALLOC (time_string, 26); /* not 25 ! */
+    strcpy (time_string, ctime(&t));
+    time_string[24] = 0; /* No newline. */
 
-  return time_string;
+    return time_string;
 }

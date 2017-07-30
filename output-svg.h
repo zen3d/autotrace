@@ -22,12 +22,12 @@
 
 #include "output.h"
 
-int output_svg_writer(FILE* file, at_string name,
-		      int llx, int lly, int urx, int ury, 
-		      at_output_opts_type * opts,
-		      at_spline_list_array_type shape,
-		      at_msg_func msg_func, 
-		      at_address msg_data);
+int output_svg_writer(FILE *file, at_string name,
+                      int llx, int lly, int urx, int ury,
+                      at_output_opts_type *opts,
+                      at_spline_list_array_type shape,
+                      at_msg_func msg_func,
+                      at_address msg_data);
 
 
 #endif /* not OUTPUT_SVG_H */

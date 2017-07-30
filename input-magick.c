@@ -33,66 +33,65 @@
 #include "bitmap.h"
 
 at_bitmap_type input_magick_reader(at_string filename,
-				   at_input_opts_type * opts,
-				   at_msg_func msg_func, 
-				   at_address msg_data)
-{
-  Image *image = NULL;
-  ImageInfo *image_info;
-  ImageType image_type;
-  unsigned int i,j,point,np,runcount;
-  at_bitmap_type bitmap;
-  PixelPacket p;
-  PixelPacket *pixel=&p;
-  ExceptionInfo exception;
+                                   at_input_opts_type *opts,
+                                   at_msg_func msg_func,
+                                   at_address msg_data) {
+    Image *image = NULL;
+    ImageInfo *image_info;
+    ImageType image_type;
+    unsigned int i, j, point, np, runcount;
+    at_bitmap_type bitmap;
+    PixelPacket p;
+    PixelPacket *pixel = &p;
+    ExceptionInfo exception;
 #if (MagickLibVersion < 0x0538)
-  MagickIncarnate("");
+    MagickIncarnate("");
 #else
-  InitializeMagick("");
+    InitializeMagick("");
 #endif
-  GetExceptionInfo(&exception);
-  image_info=CloneImageInfo((ImageInfo *) NULL);
-  (void) strcpy(image_info->filename,filename);
-  image_info->antialias = 0;
+    GetExceptionInfo(&exception);
+    image_info = CloneImageInfo((ImageInfo * )NULL);
+    (void) strcpy(image_info->filename, filename);
+    image_info->antialias = 0;
 
-  image=ReadImage(image_info,&exception);
-  if (image == (Image *) NULL) {
+    image = ReadImage(image_info, &exception);
+    if (image == (Image * )NULL) {
 #if (MagickLibVersion <= 0x0525)
-    /* MagickError(exception.severity,exception.message,exception.qualifier); */
-    if (msg_func)
-      msg_func (exception.qualifier, AT_MSG_FATAL, msg_data);
-    goto cleanup;
+        /* MagickError(exception.severity,exception.message,exception.qualifier); */
+        if (msg_func)
+            msg_func(exception.qualifier, AT_MSG_FATAL, msg_data);
+        goto cleanup;
 #else
-    /* MagickError(exception.severity,exception.reason,exception.description); */
-    if (msg_func)
-      msg_func (exception.reason, AT_MSG_FATAL, msg_data);
-    goto cleanup;
+        /* MagickError(exception.severity,exception.reason,exception.description); */
+        if (msg_func)
+          msg_func (exception.reason, AT_MSG_FATAL, msg_data);
+        goto cleanup;
 #endif
-  }
-#if (MagickLibVersion < 0x0540)
-  image_type=GetImageType(image);
-#else
-  image_type=GetImageType(image, &exception);
-#endif
-  if(image_type == BilevelType || image_type == GrayscaleType)
-    np=1;
-  else
-    np=3;
-
-  bitmap = at_bitmap_init(NULL, image->columns, image->rows, np);
-
-  for(j=0,runcount=0,point=0;j<image->rows;j++)
-    for(i=0;i<image->columns;i++) {
-      p=GetOnePixel(image,i,j);
-      AT_BITMAP_BITS(bitmap)[point++]=pixel->red; /* if gray: red=green=blue */
-      if(np==3) {
-        AT_BITMAP_BITS(bitmap)[point++]=pixel->green;
-        AT_BITMAP_BITS(bitmap)[point++]=pixel->blue;
-      }
     }
+#if (MagickLibVersion < 0x0540)
+    image_type = GetImageType(image);
+#else
+    image_type=GetImageType(image, &exception);
+#endif
+    if (image_type == BilevelType || image_type == GrayscaleType)
+        np = 1;
+    else
+        np = 3;
 
-  DestroyImage(image);
- cleanup:
-  DestroyImageInfo(image_info);  
-  return(bitmap);
+    bitmap = at_bitmap_init(NULL, image->columns, image->rows, np);
+
+    for (j = 0, runcount = 0, point = 0; j < image->rows; j++)
+        for (i = 0; i < image->columns; i++) {
+            p = GetOnePixel(image, i, j);
+            AT_BITMAP_BITS(bitmap)[point++] = pixel->red; /* if gray: red=green=blue */
+            if (np == 3) {
+                AT_BITMAP_BITS(bitmap)[point++] = pixel->green;
+                AT_BITMAP_BITS(bitmap)[point++] = pixel->blue;
+            }
+        }
+
+    DestroyImage(image);
+    cleanup:
+    DestroyImageInfo(image_info);
+    return (bitmap);
 }

@@ -52,634 +52,656 @@ float LineThickness;
 #define IND_MOVETO 0x00000002
 
 struct Chunk {
-	unsigned char ID[4];
-	unsigned int Size;
-	unsigned char * Data;
+    unsigned char ID[4];
+    unsigned int Size;
+    unsigned char *Data;
 };
 
-static struct Chunk * BuildDRHD(int, int, int, int);
-static struct Chunk * BuildPPRF(char *, int, char *, float);
-static struct Chunk * BuildCMAP(spline_list_array_type);
-static struct Chunk * BuildLAYR(void);
-static struct Chunk * BuildDASH(void);
-static struct Chunk * BuildBBOX(spline_list_type, int);
-static struct Chunk * BuildATTR(at_color_type, int, struct Chunk *);
+static struct Chunk *BuildDRHD(int, int, int, int);
+
+static struct Chunk *BuildPPRF(char *, int, char *, float);
+
+static struct Chunk *BuildCMAP(spline_list_array_type);
+
+static struct Chunk *BuildLAYR(void);
+
+static struct Chunk *BuildDASH(void);
+
+static struct Chunk *BuildBBOX(spline_list_type, int);
+
+static struct Chunk *BuildATTR(at_color_type, int, struct Chunk *);
+
 static int GetCMAPEntry(at_color_type, struct Chunk *);
+
 static int CountSplines(spline_list_type);
+
 static int SizeFloat(float, char *);
+
 static void ShortAsBytes(int, unsigned char *);
+
 static void IntAsBytes(int, unsigned char *);
+
 static void FloatAsIEEEBytes(float, unsigned char *);
+
 /* static void ieee2flt(long *, float *); */
 static void flt2ieee(float *, unsigned char *);
+
 static void FreeChunk(struct Chunk *);
+
 static void FreeChunks(struct Chunk **, int);
+
 static int TotalSizeChunks(struct Chunk **, int);
+
 static int SizeChunk(struct Chunk *);
+
 static void PushPolyPoint(unsigned char *, int *, float, float);
+
 static void PushPolyIndicator(unsigned char *, int *, unsigned int);
-static struct Chunk ** GeneratexPLY(struct Chunk *, spline_list_array_type, int);
 
-static struct Chunk * BuildCMAP(spline_list_array_type shape) {
-	unsigned this_list;
-	unsigned this_list_length;
-	int ListSize, MaxListSize;
-	int WalkCol, FoundCol;
-	unsigned char Red, Green, Blue;
-	unsigned char * CMAP;
-	unsigned char * IndexCol;
-	struct Chunk * CMAPChunk;
-	
-	MaxListSize = SPLINE_LIST_ARRAY_LENGTH(shape);
+static struct Chunk **GeneratexPLY(struct Chunk *, spline_list_array_type, int);
 
-	if ((CMAPChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate CMAP chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildCMAP(spline_list_array_type shape) {
+    unsigned this_list;
+    unsigned this_list_length;
+    int ListSize, MaxListSize;
+    int WalkCol, FoundCol;
+    unsigned char Red, Green, Blue;
+    unsigned char *CMAP;
+    unsigned char *IndexCol;
+    struct Chunk *CMAPChunk;
 
-	if ((CMAP = (unsigned char *) malloc(MaxListSize * 3)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate colour map (size %d)\n", MaxListSize);
-		free(CMAPChunk);
-		return NULL;
-	}
+    MaxListSize = SPLINE_LIST_ARRAY_LENGTH(shape);
 
-	ListSize = 0;
-	this_list_length = SPLINE_LIST_ARRAY_LENGTH(shape);
-	for (this_list = 0; this_list < this_list_length; this_list++) {
-		spline_list_type list = SPLINE_LIST_ARRAY_ELT(shape, this_list);
-        color_type curr_color = curr_color = (list.clockwise && shape.background_color != NULL)? *(shape.background_color) : list.color;
+    if ((CMAPChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate CMAP chunk\n");
+        return NULL;
+    }
 
-		Red = curr_color.r;
-		Green = curr_color.g;
-		Blue = curr_color.b;
+    if ((CMAP = (unsigned char *) malloc(MaxListSize * 3)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate colour map (size %d)\n", MaxListSize);
+        free(CMAPChunk);
+        return NULL;
+    }
 
-		FoundCol = 0;
-		for (WalkCol = 0; WalkCol < ListSize; WalkCol++) {
-			IndexCol = CMAP + (WalkCol * 3);
-			if ((*IndexCol == Red) && (*(IndexCol + 1) == Green) && (*(IndexCol + 2) == Blue)) {
-				FoundCol = 1;
-				break;
-			}
-		}
+    ListSize = 0;
+    this_list_length = SPLINE_LIST_ARRAY_LENGTH(shape);
+    for (this_list = 0; this_list < this_list_length; this_list++) {
+        spline_list_type list = SPLINE_LIST_ARRAY_ELT(shape, this_list);
+        color_type curr_color = curr_color = (list.clockwise && shape.background_color != NULL)
+                                             ? *(shape.background_color) : list.color;
 
-		if (FoundCol == 0) {
-			IndexCol = CMAP + (ListSize * 3);
-			*IndexCol = Red;
-			*(IndexCol + 1) = Green;
-			*(IndexCol + 2) = Blue;			
-			++ListSize;
-		}
-	}
+        Red = curr_color.r;
+        Green = curr_color.g;
+        Blue = curr_color.b;
 
-	strncpy(CMAPChunk->ID, "CMAP", 4);
-	CMAPChunk->Size = ListSize * 3;
-	CMAPChunk->Data = CMAP;
+        FoundCol = 0;
+        for (WalkCol = 0; WalkCol < ListSize; WalkCol++) {
+            IndexCol = CMAP + (WalkCol * 3);
+            if ((*IndexCol == Red) && (*(IndexCol + 1) == Green) && (*(IndexCol + 2) == Blue)) {
+                FoundCol = 1;
+                break;
+            }
+        }
 
-	return CMAPChunk;
+        if (FoundCol == 0) {
+            IndexCol = CMAP + (ListSize * 3);
+            *IndexCol = Red;
+            *(IndexCol + 1) = Green;
+            *(IndexCol + 2) = Blue;
+            ++ListSize;
+        }
+    }
+
+    strncpy(CMAPChunk->ID, "CMAP", 4);
+    CMAPChunk->Size = ListSize * 3;
+    CMAPChunk->Data = CMAP;
+
+    return CMAPChunk;
 }
 
-static int GetCMAPEntry(at_color_type colour, struct Chunk * CMAPChunk) {
-	int WalkCol, ListSize;
-	unsigned char Red, Green, Blue;
-	unsigned char * IndexCol;
-	unsigned char * CMAPTable;
+static int GetCMAPEntry(at_color_type colour, struct Chunk *CMAPChunk) {
+    int WalkCol, ListSize;
+    unsigned char Red, Green, Blue;
+    unsigned char *IndexCol;
+    unsigned char *CMAPTable;
 
-	ListSize = (CMAPChunk->Size) / 3;
-	CMAPTable = CMAPChunk->Data;
+    ListSize = (CMAPChunk->Size) / 3;
+    CMAPTable = CMAPChunk->Data;
 
-	Red = colour.r;
-	Green = colour.g;
-	Blue = colour.b;
+    Red = colour.r;
+    Green = colour.g;
+    Blue = colour.b;
 
-	for (WalkCol = 0; WalkCol < ListSize; WalkCol++) {
-		IndexCol = CMAPTable + (WalkCol * 3);
-		if ((*IndexCol == Red) && (*(IndexCol + 1) == Green) && (*(IndexCol + 2) == Blue)) {
-			return WalkCol;
-		}
-	}
+    for (WalkCol = 0; WalkCol < ListSize; WalkCol++) {
+        IndexCol = CMAPTable + (WalkCol * 3);
+        if ((*IndexCol == Red) && (*(IndexCol + 1) == Green) && (*(IndexCol + 2) == Blue)) {
+            return WalkCol;
+        }
+    }
 
-	return -1;
+    return -1;
 }
 
-static struct Chunk * BuildBBOX(spline_list_type list, int height) {
-	unsigned this_spline;
-	unsigned this_spline_length;
-	float x1, y1, x2, y2;
-	float ex, ey;
-	struct Chunk * BBOXChunk;
-	unsigned char * BBOXData;
-	spline_type s;
-	
-	if ((BBOXChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate BBOX chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildBBOX(spline_list_type list, int height) {
+    unsigned this_spline;
+    unsigned this_spline_length;
+    float x1, y1, x2, y2;
+    float ex, ey;
+    struct Chunk *BBOXChunk;
+    unsigned char *BBOXData;
+    spline_type s;
 
-	if ((BBOXData = (unsigned char *) malloc(16)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate BBOX data\n");
-		free(BBOXChunk);
-		return NULL;
-	}
+    if ((BBOXChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate BBOX chunk\n");
+        return NULL;
+    }
 
-	s = SPLINE_LIST_ELT(list, 0);
+    if ((BBOXData = (unsigned char *) malloc(16)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate BBOX data\n");
+        free(BBOXChunk);
+        return NULL;
+    }
 
-	x1 = START_POINT(s).x;
-	y1 = START_POINT(s).y;
-	x2 = START_POINT(s).x;
-	y2 = START_POINT(s).y;
+    s = SPLINE_LIST_ELT(list, 0);
 
-	this_spline_length = SPLINE_LIST_LENGTH(list);
-	for (this_spline = 0; this_spline < this_spline_length; this_spline++) {
-		s = SPLINE_LIST_ELT(list, this_spline);
-		ex = END_POINT(s).x;
-		ey = height - END_POINT(s).y;
+    x1 = START_POINT(s).x;
+    y1 = START_POINT(s).y;
+    x2 = START_POINT(s).x;
+    y2 = START_POINT(s).y;
 
-		if (x1 > ex) {
-			x1 = ex;
-		}
+    this_spline_length = SPLINE_LIST_LENGTH(list);
+    for (this_spline = 0; this_spline < this_spline_length; this_spline++) {
+        s = SPLINE_LIST_ELT(list, this_spline);
+        ex = END_POINT(s).x;
+        ey = height - END_POINT(s).y;
 
-		if (y1 > ey) {
-			y1 = ey;
-		}
+        if (x1 > ex) {
+            x1 = ex;
+        }
 
-		if (x2 < ex) {
-			x2 = ex;
-		}
+        if (y1 > ey) {
+            y1 = ey;
+        }
 
-		if (y2 < ey) {
-			y2 = ey;
-		}
-	}
+        if (x2 < ex) {
+            x2 = ex;
+        }
 
-	FloatAsIEEEBytes(x1 * XFactor, BBOXData);
-	FloatAsIEEEBytes(y1 * YFactor, BBOXData + 4);
-	FloatAsIEEEBytes(x2 * XFactor, BBOXData + 8);
-	FloatAsIEEEBytes(y2 * YFactor, BBOXData + 12);
+        if (y2 < ey) {
+            y2 = ey;
+        }
+    }
 
-	strncpy(BBOXChunk->ID, "BBOX", 4);
-	BBOXChunk->Size = 16;
-	BBOXChunk->Data = BBOXData;
+    FloatAsIEEEBytes(x1 * XFactor, BBOXData);
+    FloatAsIEEEBytes(y1 * YFactor, BBOXData + 4);
+    FloatAsIEEEBytes(x2 * XFactor, BBOXData + 8);
+    FloatAsIEEEBytes(y2 * YFactor, BBOXData + 12);
 
-	return BBOXChunk;
+    strncpy(BBOXChunk->ID, "BBOX", 4);
+    BBOXChunk->Size = 16;
+    BBOXChunk->Data = BBOXData;
+
+    return BBOXChunk;
 }
 
-static struct Chunk * BuildATTR(at_color_type colour, int StrokeOrFill, struct Chunk * CMAPChunk) {
-	struct Chunk * ATTRChunk;
-	unsigned char * ATTRData;
-	int ColourIndex;
-	
-	if ((ATTRChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate ATTR chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildATTR(at_color_type colour, int StrokeOrFill, struct Chunk *CMAPChunk) {
+    struct Chunk *ATTRChunk;
+    unsigned char *ATTRData;
+    int ColourIndex;
 
-	if ((ATTRData = (unsigned char *) malloc(14)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate ATTR data\n");
-		free(ATTRChunk);
-		return NULL;
-	}
+    if ((ATTRChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate ATTR chunk\n");
+        return NULL;
+    }
 
-	ColourIndex = GetCMAPEntry(colour, CMAPChunk);
+    if ((ATTRData = (unsigned char *) malloc(14)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate ATTR data\n");
+        free(ATTRChunk);
+        return NULL;
+    }
 
-	ATTRData[0] = (StrokeOrFill) ? FT_NONE : FT_COLOR;
-	ATTRData[1] = JT_ROUND;
-	ATTRData[2] = 1;
-	ATTRData[3] = 0;
-	ShortAsBytes(ColourIndex, ATTRData + 4);
-	ShortAsBytes(ColourIndex, ATTRData + 6);
-	ShortAsBytes(0, ATTRData + 8);
-	FloatAsIEEEBytes(LineThickness, ATTRData + 10);
+    ColourIndex = GetCMAPEntry(colour, CMAPChunk);
 
-	strncpy(ATTRChunk->ID, "ATTR", 4);
-	ATTRChunk->Size = 14;
-	ATTRChunk->Data = ATTRData;
+    ATTRData[0] = (StrokeOrFill) ? FT_NONE : FT_COLOR;
+    ATTRData[1] = JT_ROUND;
+    ATTRData[2] = 1;
+    ATTRData[3] = 0;
+    ShortAsBytes(ColourIndex, ATTRData + 4);
+    ShortAsBytes(ColourIndex, ATTRData + 6);
+    ShortAsBytes(0, ATTRData + 8);
+    FloatAsIEEEBytes(LineThickness, ATTRData + 10);
 
-	return ATTRChunk;
+    strncpy(ATTRChunk->ID, "ATTR", 4);
+    ATTRChunk->Size = 14;
+    ATTRChunk->Data = ATTRData;
+
+    return ATTRChunk;
 }
 
-static struct Chunk * BuildDRHD(int x1, int y1, int x2, int y2) {
-	struct Chunk * DRHDChunk;
-	unsigned char * DRHDData;
-	
-	if ((DRHDChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate DRHD chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildDRHD(int x1, int y1, int x2, int y2) {
+    struct Chunk *DRHDChunk;
+    unsigned char *DRHDData;
 
-	if ((DRHDData = (unsigned char *) malloc(16)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate DRHD data\n");
-		free(DRHDChunk);
-		return NULL;
-	}
+    if ((DRHDChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate DRHD chunk\n");
+        return NULL;
+    }
 
-	FloatAsIEEEBytes(x1 * XFactor, DRHDData);
-	FloatAsIEEEBytes(y1 * YFactor, DRHDData + 4);
-	FloatAsIEEEBytes(x2 * XFactor, DRHDData + 8);
-	FloatAsIEEEBytes(y2 * YFactor, DRHDData + 12);
+    if ((DRHDData = (unsigned char *) malloc(16)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate DRHD data\n");
+        free(DRHDChunk);
+        return NULL;
+    }
 
-	strncpy(DRHDChunk->ID, "DRHD", 4);
-	DRHDChunk->Size = 16;
-	DRHDChunk->Data = DRHDData;
+    FloatAsIEEEBytes(x1 * XFactor, DRHDData);
+    FloatAsIEEEBytes(y1 * YFactor, DRHDData + 4);
+    FloatAsIEEEBytes(x2 * XFactor, DRHDData + 8);
+    FloatAsIEEEBytes(y2 * YFactor, DRHDData + 12);
 
-	return DRHDChunk;
+    strncpy(DRHDChunk->ID, "DRHD", 4);
+    DRHDChunk->Size = 16;
+    DRHDChunk->Data = DRHDData;
+
+    return DRHDChunk;
 }
 
-static struct Chunk * BuildPPRF(char * Units, int Portrait, char * PageType, float GridSize) {
-	struct Chunk * PPRFChunk;
-	char * PPRFData;
-	char * PPRFPos;
-	int ChunkSize;
-	
-	if ((PPRFChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate PPRF chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildPPRF(char *Units, int Portrait, char *PageType, float GridSize) {
+    struct Chunk *PPRFChunk;
+    char *PPRFData;
+    char *PPRFPos;
+    int ChunkSize;
 
-	ChunkSize = strlen("Units=") + strlen(Units) + 1;
-	ChunkSize += strlen("Portrait=") + (Portrait ? 4 : 5) + 1;
-	ChunkSize += strlen("PageType=") + strlen(PageType) + 1;
-	ChunkSize += strlen("GridSize=") + SizeFloat(GridSize, "%f") + 1;
+    if ((PPRFChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate PPRF chunk\n");
+        return NULL;
+    }
 
-	if ((PPRFData = (char *) malloc(ChunkSize)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate PPRF data\n");
-		free(PPRFChunk);
-		return NULL;
-	}
+    ChunkSize = strlen("Units=") + strlen(Units) + 1;
+    ChunkSize += strlen("Portrait=") + (Portrait ? 4 : 5) + 1;
+    ChunkSize += strlen("PageType=") + strlen(PageType) + 1;
+    ChunkSize += strlen("GridSize=") + SizeFloat(GridSize, "%f") + 1;
 
-	PPRFPos = PPRFData;
-	sprintf(PPRFPos, "Units=%s", Units);
-	PPRFPos += strlen(PPRFPos) + 1;
-	sprintf(PPRFPos, "Portrait=%s", (Portrait ? "True" : "False"));
-	PPRFPos += strlen(PPRFPos) + 1;
-	sprintf(PPRFPos, "PageType=%s", PageType);
-	PPRFPos += strlen(PPRFPos) + 1;
-	sprintf(PPRFPos, "GridSize=%f", GridSize);
+    if ((PPRFData = (char *) malloc(ChunkSize)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate PPRF data\n");
+        free(PPRFChunk);
+        return NULL;
+    }
 
-	strncpy(PPRFChunk->ID, "PPRF", 4);
-	PPRFChunk->Size = ChunkSize;
-	PPRFChunk->Data = (unsigned char *) PPRFData;
+    PPRFPos = PPRFData;
+    sprintf(PPRFPos, "Units=%s", Units);
+    PPRFPos += strlen(PPRFPos) + 1;
+    sprintf(PPRFPos, "Portrait=%s", (Portrait ? "True" : "False"));
+    PPRFPos += strlen(PPRFPos) + 1;
+    sprintf(PPRFPos, "PageType=%s", PageType);
+    PPRFPos += strlen(PPRFPos) + 1;
+    sprintf(PPRFPos, "GridSize=%f", GridSize);
 
-	return PPRFChunk;
+    strncpy(PPRFChunk->ID, "PPRF", 4);
+    PPRFChunk->Size = ChunkSize;
+    PPRFChunk->Data = (unsigned char *) PPRFData;
+
+    return PPRFChunk;
 }
 
-static struct Chunk * BuildLAYR() {
-	struct Chunk * LAYRChunk;
-	unsigned char * LAYRData;
-	
-	if ((LAYRChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate LAYR chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildLAYR() {
+    struct Chunk *LAYRChunk;
+    unsigned char *LAYRData;
 
-	if ((LAYRData = (unsigned char *) malloc(20)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate LAYR data\n");
-		free(LAYRChunk);
-		return NULL;
-	}
+    if ((LAYRChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate LAYR chunk\n");
+        return NULL;
+    }
 
-	ShortAsBytes(0, LAYRData);
-	memset(LAYRData + 2, (char) NULL, 16);
-	strcpy(LAYRData + 2, "Default layer");
-	*(LAYRData + 18) = LF_ACTIVE | LF_DISPLAYED;
-	*(LAYRData + 19) = 0;
+    if ((LAYRData = (unsigned char *) malloc(20)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate LAYR data\n");
+        free(LAYRChunk);
+        return NULL;
+    }
 
-	strncpy(LAYRChunk->ID, "LAYR", 4);
-	LAYRChunk->Size = 20;
-	LAYRChunk->Data = LAYRData;
+    ShortAsBytes(0, LAYRData);
+    memset(LAYRData + 2, (char) NULL, 16);
+    strcpy(LAYRData + 2, "Default layer");
+    *(LAYRData + 18) = LF_ACTIVE | LF_DISPLAYED;
+    *(LAYRData + 19) = 0;
 
-	return LAYRChunk;
+    strncpy(LAYRChunk->ID, "LAYR", 4);
+    LAYRChunk->Size = 20;
+    LAYRChunk->Data = LAYRData;
+
+    return LAYRChunk;
 }
 
-static struct Chunk * BuildDASH(void) {
-	struct Chunk * DASHChunk;
-	unsigned char * DASHData;
-	
-	if ((DASHChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate DASH chunk\n");
-		return NULL;
-	}
+static struct Chunk *BuildDASH(void) {
+    struct Chunk *DASHChunk;
+    unsigned char *DASHData;
 
-	if ((DASHData = (unsigned char *) malloc(4)) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate DASH data\n");
-		free(DASHChunk);
-		return NULL;
-	}
+    if ((DASHChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate DASH chunk\n");
+        return NULL;
+    }
 
-	ShortAsBytes(1, DASHData);
-	ShortAsBytes(0, DASHData + 2);
+    if ((DASHData = (unsigned char *) malloc(4)) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate DASH data\n");
+        free(DASHChunk);
+        return NULL;
+    }
 
-	strncpy(DASHChunk->ID, "DASH", 4);
-	DASHChunk->Size = 4;
-	DASHChunk->Data = DASHData;
+    ShortAsBytes(1, DASHData);
+    ShortAsBytes(0, DASHData + 2);
 
-	return DASHChunk;
+    strncpy(DASHChunk->ID, "DASH", 4);
+    DASHChunk->Size = 4;
+    DASHChunk->Data = DASHData;
+
+    return DASHChunk;
 }
 
-static struct Chunk ** GeneratexPLY(struct Chunk * CMAP, spline_list_array_type shape, int height) {
-	unsigned this_list;
-	unsigned this_list_length;
-	unsigned this_spline;
-	unsigned this_spline_length;
-	spline_type s;
-	struct Chunk ** ChunkList;
-	struct Chunk * PolyChunk;
-	int ListPoint, PolySize, PolyPoint, NumPoints;
-	int StrokeOrFill;
-	unsigned char * PolyData;
+static struct Chunk **GeneratexPLY(struct Chunk *CMAP, spline_list_array_type shape, int height) {
+    unsigned this_list;
+    unsigned this_list_length;
+    unsigned this_spline;
+    unsigned this_spline_length;
+    spline_type s;
+    struct Chunk **ChunkList;
+    struct Chunk *PolyChunk;
+    int ListPoint, PolySize, PolyPoint, NumPoints;
+    int StrokeOrFill;
+    unsigned char *PolyData;
 
-	this_list_length = SPLINE_LIST_ARRAY_LENGTH(shape);
+    this_list_length = SPLINE_LIST_ARRAY_LENGTH(shape);
 
-	/* We store three chunks for every spline (one for BBOX, one for ATTR, and one for xPLY) */	
-	if ((ChunkList = (struct Chunk **) malloc(sizeof(struct Chunk) * (this_list_length * 3))) == NULL) {
-		fprintf(stderr, "Insufficient memory to allocate chunk list\n");
-		return NULL;
-	}
+    /* We store three chunks for every spline (one for BBOX, one for ATTR, and one for xPLY) */
+    if ((ChunkList = (struct Chunk **) malloc(sizeof(struct Chunk) * (this_list_length * 3))) == NULL) {
+        fprintf(stderr, "Insufficient memory to allocate chunk list\n");
+        return NULL;
+    }
 
-	ListPoint = 0;
-	for (this_list = 0; this_list < this_list_length; this_list++) {
-		spline_list_type list = SPLINE_LIST_ARRAY_ELT(shape, this_list);
-		spline_type first = SPLINE_LIST_ELT(list, 0);
-        color_type curr_color = curr_color = (list.clockwise && shape.background_color != NULL)? *(shape.background_color) : list.color;
+    ListPoint = 0;
+    for (this_list = 0; this_list < this_list_length; this_list++) {
+        spline_list_type list = SPLINE_LIST_ARRAY_ELT(shape, this_list);
+        spline_type first = SPLINE_LIST_ELT(list, 0);
+        color_type curr_color = curr_color = (list.clockwise && shape.background_color != NULL)
+                                             ? *(shape.background_color) : list.color;
 
-		StrokeOrFill = (shape.centerline || list.open);
-		this_spline_length = SPLINE_LIST_LENGTH(list);
+        StrokeOrFill = (shape.centerline || list.open);
+        this_spline_length = SPLINE_LIST_LENGTH(list);
 
-		ChunkList[ListPoint++] = BuildBBOX(list, height);
-		ChunkList[ListPoint++] = BuildATTR(curr_color, StrokeOrFill, CMAP);
+        ChunkList[ListPoint++] = BuildBBOX(list, height);
+        ChunkList[ListPoint++] = BuildATTR(curr_color, StrokeOrFill, CMAP);
 
-		if ((PolyChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
-			fprintf(stderr, "Insufficient memory to allocate xPLY chunk\n");
-			FreeChunks(ChunkList, ListPoint);
-			return NULL;
-		}
+        if ((PolyChunk = (struct Chunk *) malloc(sizeof(struct Chunk))) == NULL) {
+            fprintf(stderr, "Insufficient memory to allocate xPLY chunk\n");
+            FreeChunks(ChunkList, ListPoint);
+            return NULL;
+        }
 
-		NumPoints = CountSplines(list);
+        NumPoints = CountSplines(list);
 
-		/* Store an extra 2 bytes for length header */
-		PolySize = (NumPoints << 3) + 2;
-		if ((PolyData = (unsigned char *) malloc(PolySize)) == NULL) {
-			fprintf(stderr, "Insufficient memory to allocate xPLY data\n");
-			free(PolyChunk);
-			free(PolyData);
-			FreeChunks(ChunkList, ListPoint);
-			return NULL;
-		}
+        /* Store an extra 2 bytes for length header */
+        PolySize = (NumPoints << 3) + 2;
+        if ((PolyData = (unsigned char *) malloc(PolySize)) == NULL) {
+            fprintf(stderr, "Insufficient memory to allocate xPLY data\n");
+            free(PolyChunk);
+            free(PolyData);
+            FreeChunks(ChunkList, ListPoint);
+            return NULL;
+        }
 
-		ChunkList[ListPoint++] = PolyChunk;
-		strncpy(PolyChunk->ID, (StrokeOrFill) ? "OPLY" : "CPLY", 4);
-		PolyChunk->Size = PolySize;
-		PolyChunk->Data = PolyData;
+        ChunkList[ListPoint++] = PolyChunk;
+        strncpy(PolyChunk->ID, (StrokeOrFill) ? "OPLY" : "CPLY", 4);
+        PolyChunk->Size = PolySize;
+        PolyChunk->Data = PolyData;
 
-		ShortAsBytes(NumPoints, PolyData);
-		PolyPoint = 2;
+        ShortAsBytes(NumPoints, PolyData);
+        PolyPoint = 2;
 
-		if (SPLINE_DEGREE(first) == LINEARTYPE) {
-			PushPolyPoint(PolyData, &PolyPoint, START_POINT(first).x, height - START_POINT(first).y);
-		}
+        if (SPLINE_DEGREE(first) == LINEARTYPE) {
+            PushPolyPoint(PolyData, &PolyPoint, START_POINT(first).x, height - START_POINT(first).y);
+        }
 
-		for (this_spline = 0; this_spline < this_spline_length; this_spline++) {
-			s = SPLINE_LIST_ELT(list, this_spline);
+        for (this_spline = 0; this_spline < this_spline_length; this_spline++) {
+            s = SPLINE_LIST_ELT(list, this_spline);
 
-			if (SPLINE_DEGREE(s) == LINEARTYPE) {
-				PushPolyPoint(PolyData, &PolyPoint, END_POINT(s).x, height - END_POINT(s).y);
-			} else {
-				PushPolyIndicator(PolyData, &PolyPoint, IND_SPLINE);
-				PushPolyPoint(PolyData, &PolyPoint, START_POINT(s).x, height - START_POINT(s).y);
-				PushPolyPoint(PolyData, &PolyPoint, CONTROL1(s).x, height - CONTROL1(s).y);
-				PushPolyPoint(PolyData, &PolyPoint, CONTROL2(s).x, height - CONTROL2(s).y);
-				PushPolyPoint(PolyData, &PolyPoint, END_POINT(s).x, height - END_POINT(s).y);
-			}
-		}
-	}
-	
-	return ChunkList;
+            if (SPLINE_DEGREE(s) == LINEARTYPE) {
+                PushPolyPoint(PolyData, &PolyPoint, END_POINT(s).x, height - END_POINT(s).y);
+            } else {
+                PushPolyIndicator(PolyData, &PolyPoint, IND_SPLINE);
+                PushPolyPoint(PolyData, &PolyPoint, START_POINT(s).x, height - START_POINT(s).y);
+                PushPolyPoint(PolyData, &PolyPoint, CONTROL1(s).x, height - CONTROL1(s).y);
+                PushPolyPoint(PolyData, &PolyPoint, CONTROL2(s).x, height - CONTROL2(s).y);
+                PushPolyPoint(PolyData, &PolyPoint, END_POINT(s).x, height - END_POINT(s).y);
+            }
+        }
+    }
+
+    return ChunkList;
 }
 
 static int CountSplines(spline_list_type list) {
-	unsigned this_spline;
-	unsigned this_spline_length;
-	int Total;
-	
-	Total = 0;
+    unsigned this_spline;
+    unsigned this_spline_length;
+    int Total;
 
-	if (SPLINE_DEGREE(SPLINE_LIST_ELT(list, 0)) == LINEARTYPE) {
-		++Total;
-	}
+    Total = 0;
 
-	this_spline_length = SPLINE_LIST_LENGTH(list);
-	for (this_spline = 0; this_spline < this_spline_length; this_spline++) {
-		if (SPLINE_DEGREE(SPLINE_LIST_ELT(list, this_spline)) == LINEARTYPE) {
-			++Total;
-		} else {
-			Total += 5;
-		}
-	}
+    if (SPLINE_DEGREE(SPLINE_LIST_ELT(list, 0)) == LINEARTYPE) {
+        ++Total;
+    }
 
-	return Total;
+    this_spline_length = SPLINE_LIST_LENGTH(list);
+    for (this_spline = 0; this_spline < this_spline_length; this_spline++) {
+        if (SPLINE_DEGREE(SPLINE_LIST_ELT(list, this_spline)) == LINEARTYPE) {
+            ++Total;
+        } else {
+            Total += 5;
+        }
+    }
+
+    return Total;
 }
 
-static void PushPolyPoint(unsigned char * PolyData, int * PolyPoint, float x, float y) {
-	int PolyLocal;
-	
-	PolyLocal = *PolyPoint;
+static void PushPolyPoint(unsigned char *PolyData, int *PolyPoint, float x, float y) {
+    int PolyLocal;
 
-	FloatAsIEEEBytes(x * XFactor, PolyData + PolyLocal);
-	PolyLocal += 4;
-	FloatAsIEEEBytes(y * YFactor, PolyData + PolyLocal);
+    PolyLocal = *PolyPoint;
 
-	*PolyPoint = PolyLocal + 4;
+    FloatAsIEEEBytes(x * XFactor, PolyData + PolyLocal);
+    PolyLocal += 4;
+    FloatAsIEEEBytes(y * YFactor, PolyData + PolyLocal);
+
+    *PolyPoint = PolyLocal + 4;
 }
 
-static void PushPolyIndicator(unsigned char * PolyData, int * PolyPoint, unsigned int flags) {
-	int PolyLocal;
-	
-	PolyLocal = *PolyPoint;
+static void PushPolyIndicator(unsigned char *PolyData, int *PolyPoint, unsigned int flags) {
+    int PolyLocal;
 
-	IntAsBytes(INDICATOR, PolyData + PolyLocal);
-	PolyLocal += 4;
-	IntAsBytes(flags, PolyData + PolyLocal);
+    PolyLocal = *PolyPoint;
 
-	*PolyPoint = PolyLocal + 4;
+    IntAsBytes(INDICATOR, PolyData + PolyLocal);
+    PolyLocal += 4;
+    IntAsBytes(flags, PolyData + PolyLocal);
+
+    *PolyPoint = PolyLocal + 4;
 }
 
-static void WriteChunk(FILE * file, struct Chunk * Chunk) {
-	unsigned char SizeBytes[4];
-	int Size;
-	
-	Size = Chunk->Size;
-	IntAsBytes(Size, SizeBytes);
+static void WriteChunk(FILE *file, struct Chunk *Chunk) {
+    unsigned char SizeBytes[4];
+    int Size;
 
-	fwrite(Chunk->ID, 4, 1, file);
-	fwrite(SizeBytes, 4, 1, file);
-	fwrite(Chunk->Data, Size, 1, file);
-	if (Size & 0x01) {
-		fprintf(file, "%c", (char) NULL);
-	}
+    Size = Chunk->Size;
+    IntAsBytes(Size, SizeBytes);
+
+    fwrite(Chunk->ID, 4, 1, file);
+    fwrite(SizeBytes, 4, 1, file);
+    fwrite(Chunk->Data, Size, 1, file);
+    if (Size & 0x01) {
+        fprintf(file, "%c", (char) NULL);
+    }
 }
 
-static void WriteChunks(FILE * file, struct Chunk ** ChunkList, int NumChunks) {
-	int WalkChunks;
-	
-	for (WalkChunks = 0; WalkChunks < NumChunks; WalkChunks++) {
-		WriteChunk(file, ChunkList[WalkChunks]);
-	}
+static void WriteChunks(FILE *file, struct Chunk **ChunkList, int NumChunks) {
+    int WalkChunks;
+
+    for (WalkChunks = 0; WalkChunks < NumChunks; WalkChunks++) {
+        WriteChunk(file, ChunkList[WalkChunks]);
+    }
 }
 
-static int TotalSizeChunks(struct Chunk ** ChunkList, int NumChunks) {
-	int WalkChunks;
-	int Size;
-	int Total;
-	
-	Total = 0;
-	for (WalkChunks = 0; WalkChunks < NumChunks; WalkChunks++) {
-		/* 4 bytes for ID and 4 bytes for length */
-		Size = ChunkList[WalkChunks]->Size;
-		Size += Size & 0x01;
-		Total += (Size) + 8;
-	}
-	
-	return Total;
+static int TotalSizeChunks(struct Chunk **ChunkList, int NumChunks) {
+    int WalkChunks;
+    int Size;
+    int Total;
+
+    Total = 0;
+    for (WalkChunks = 0; WalkChunks < NumChunks; WalkChunks++) {
+        /* 4 bytes for ID and 4 bytes for length */
+        Size = ChunkList[WalkChunks]->Size;
+        Size += Size & 0x01;
+        Total += (Size) + 8;
+    }
+
+    return Total;
 }
 
-static int SizeChunk(struct Chunk * ThisChunk) {
-	int Size;
-	
-	Size = ThisChunk->Size;
-	Size += Size & 0x01;
+static int SizeChunk(struct Chunk *ThisChunk) {
+    int Size;
 
-	return Size;
+    Size = ThisChunk->Size;
+    Size += Size & 0x01;
+
+    return Size;
 }
 
-static void FreeChunk(struct Chunk * ThisChunk) {
-	free(ThisChunk->Data);
-	free(ThisChunk);
+static void FreeChunk(struct Chunk *ThisChunk) {
+    free(ThisChunk->Data);
+    free(ThisChunk);
 }
 
-static void FreeChunks(struct Chunk ** ChunkList, int NumChunks) {
-	int WalkChunks;
-	
-	for (WalkChunks = 0; WalkChunks < NumChunks; WalkChunks++) {
-		FreeChunk(ChunkList[WalkChunks]);
-	}
+static void FreeChunks(struct Chunk **ChunkList, int NumChunks) {
+    int WalkChunks;
+
+    for (WalkChunks = 0; WalkChunks < NumChunks; WalkChunks++) {
+        FreeChunk(ChunkList[WalkChunks]);
+    }
 }
 
-int output_dr2d_writer(FILE * file, at_string name, int llx, int lly, int urx, int ury, 
-		       at_output_opts_type * opts,
-		       spline_list_array_type shape, at_msg_func msg_func, at_address msg_data) 
-{
-	int width = urx - llx;
-	int height = ury - lly;
-	int NumSplines, FORMSize;
-	int Portrait;
-	struct Chunk * DRHDChunk;
-	struct Chunk * PPRFChunk;
-	struct Chunk * LAYRChunk;
-	struct Chunk * DASHChunk;
-	struct Chunk * CMAPChunk;
-	struct Chunk ** ChunkList;
-	unsigned char SizeBytes[4];
+int output_dr2d_writer(FILE *file, at_string name, int llx, int lly, int urx, int ury,
+                       at_output_opts_type *opts,
+                       spline_list_array_type shape, at_msg_func msg_func, at_address msg_data) {
+    int width = urx - llx;
+    int height = ury - lly;
+    int NumSplines, FORMSize;
+    int Portrait;
+    struct Chunk *DRHDChunk;
+    struct Chunk *PPRFChunk;
+    struct Chunk *LAYRChunk;
+    struct Chunk *DASHChunk;
+    struct Chunk *CMAPChunk;
+    struct Chunk **ChunkList;
+    unsigned char SizeBytes[4];
 
-	Portrait = width < height;
+    Portrait = width < height;
 
-	if (Portrait) {
-		XFactor = ((float)11.6930 / (float) width) * (1 << FIXOFFS);
-		YFactor = XFactor;
-	} else {
-		YFactor = ((float)8.2681 / (float) height) * (1 << FIXOFFS);
-		XFactor = YFactor;
-	}
+    if (Portrait) {
+        XFactor = ((float) 11.6930 / (float) width) * (1 << FIXOFFS);
+        YFactor = XFactor;
+    } else {
+        YFactor = ((float) 8.2681 / (float) height) * (1 << FIXOFFS);
+        XFactor = YFactor;
+    }
 
-	LineThickness = (float)1.0 / opts->dpi;
+    LineThickness = (float) 1.0 / opts->dpi;
 
-	DRHDChunk = BuildDRHD(llx, lly, urx, ury);
-	PPRFChunk = BuildPPRF("Inch", Portrait, "A4", 1.0);
-	LAYRChunk = BuildLAYR();
-	DASHChunk = BuildDASH();
-	CMAPChunk = BuildCMAP(shape);
+    DRHDChunk = BuildDRHD(llx, lly, urx, ury);
+    PPRFChunk = BuildPPRF("Inch", Portrait, "A4", 1.0);
+    LAYRChunk = BuildLAYR();
+    DASHChunk = BuildDASH();
+    CMAPChunk = BuildCMAP(shape);
 
-	ChunkList = GeneratexPLY(CMAPChunk, shape, height);
+    ChunkList = GeneratexPLY(CMAPChunk, shape, height);
 
-	NumSplines = SPLINE_LIST_ARRAY_LENGTH(shape) * 3;
-	FORMSize = 4 + (SizeChunk(DRHDChunk) + 8) + (SizeChunk(PPRFChunk) + 8) + (SizeChunk(LAYRChunk) + 8) + (SizeChunk(DASHChunk) + 8) + (SizeChunk(CMAPChunk) + 8) + TotalSizeChunks(ChunkList, NumSplines);
+    NumSplines = SPLINE_LIST_ARRAY_LENGTH(shape) * 3;
+    FORMSize = 4 + (SizeChunk(DRHDChunk) + 8) + (SizeChunk(PPRFChunk) + 8) + (SizeChunk(LAYRChunk) + 8) +
+               (SizeChunk(DASHChunk) + 8) + (SizeChunk(CMAPChunk) + 8) + TotalSizeChunks(ChunkList, NumSplines);
 
-	IntAsBytes(FORMSize, SizeBytes);
-	fprintf(file, "FORM");
-	fwrite(SizeBytes, 4, 1, file);
-	fprintf(file, "DR2D");
+    IntAsBytes(FORMSize, SizeBytes);
+    fprintf(file, "FORM");
+    fwrite(SizeBytes, 4, 1, file);
+    fprintf(file, "DR2D");
 
-	WriteChunk(file, DRHDChunk);
-	FreeChunk(DRHDChunk);
-	WriteChunk(file, PPRFChunk);
-	FreeChunk(PPRFChunk);
-	WriteChunk(file, LAYRChunk);
-	FreeChunk(LAYRChunk);
-	WriteChunk(file, DASHChunk);
-	FreeChunk(DASHChunk);
-	WriteChunk(file, CMAPChunk);
-	FreeChunk(CMAPChunk);
-	WriteChunks(file, ChunkList, NumSplines);
-	FreeChunks(ChunkList, NumSplines);
+    WriteChunk(file, DRHDChunk);
+    FreeChunk(DRHDChunk);
+    WriteChunk(file, PPRFChunk);
+    FreeChunk(PPRFChunk);
+    WriteChunk(file, LAYRChunk);
+    FreeChunk(LAYRChunk);
+    WriteChunk(file, DASHChunk);
+    FreeChunk(DASHChunk);
+    WriteChunk(file, CMAPChunk);
+    FreeChunk(CMAPChunk);
+    WriteChunks(file, ChunkList, NumSplines);
+    FreeChunks(ChunkList, NumSplines);
 
-	return 0;
+    return 0;
 }
 
-static int SizeFloat(float f, char * Format) {
-	char FloatString[100];
+static int SizeFloat(float f, char *Format) {
+    char FloatString[100];
 
-	return (sprintf(FloatString, Format, f));
+    return (sprintf(FloatString, Format, f));
 }
 
-static void IntAsBytes(int value, unsigned char * bytes) {
-	*bytes = (value >> 24) & 0xFF;
-	*(bytes + 1) = (value >> 16) & 0xFF;
-	*(bytes + 2) = (value >> 8) & 0xFF;
-	*(bytes + 3) = value & 0xFF;
+static void IntAsBytes(int value, unsigned char *bytes) {
+    *bytes = (value >> 24) & 0xFF;
+    *(bytes + 1) = (value >> 16) & 0xFF;
+    *(bytes + 2) = (value >> 8) & 0xFF;
+    *(bytes + 3) = value & 0xFF;
 }
 
-static void ShortAsBytes(int value, unsigned char * bytes) {
-	*(bytes + 0) = (value >> 8) & 0xFF;
-	*(bytes + 1) = value & 0xFF;
+static void ShortAsBytes(int value, unsigned char *bytes) {
+    *(bytes + 0) = (value >> 8) & 0xFF;
+    *(bytes + 1) = value & 0xFF;
 }
 
-static void FloatAsIEEEBytes(float value, unsigned char * bytes) {
-	flt2ieee(&value, bytes);
+static void FloatAsIEEEBytes(float value, unsigned char *bytes) {
+    flt2ieee(&value, bytes);
 }
 
-static void flt2ieee(float * flt, unsigned char * bytes) {
-	long RealMant, RealMask, RealExp;
-	long MoveExp;
-		
-	RealMant = (long) *flt;
+static void flt2ieee(float *flt, unsigned char *bytes) {
+    long RealMant, RealMask, RealExp;
+    long MoveExp;
 
-	*bytes = 0;
-	*(bytes + 1) = 0;
-	*(bytes + 2) = 0;
-	*(bytes + 3) = 0;
+    RealMant = (long) *flt;
 
-	if (RealMant) {
-		if (RealMant < 0) {
-			*bytes |= 0x80;
-			RealMant = -RealMant;
-		}
+    *bytes = 0;
+    *(bytes + 1) = 0;
+    *(bytes + 2) = 0;
+    *(bytes + 3) = 0;
 
-		for (RealMask = 0x40000000, RealExp = 31; RealMask; RealMask >>= 1, RealExp--) {
-			if (RealMant & RealMask) {
-				break;
-			}
-		}
+    if (RealMant) {
+        if (RealMant < 0) {
+            *bytes |= 0x80;
+            RealMant = -RealMant;
+        }
 
-		if (RealExp > 24) {
-			RealMant >>= RealExp - 24;
-		} else {
-			RealMant <<= 24 - RealExp;
-		}
-		RealExp -= FIXOFFS;
-		RealExp += 126;
+        for (RealMask = 0x40000000, RealExp = 31; RealMask; RealMask >>= 1, RealExp--) {
+            if (RealMant & RealMask) {
+                break;
+            }
+        }
 
-		MoveExp = RealExp << 23;
-		*bytes |= (MoveExp >> 24) & 0x7F;
-		*(bytes + 1) |= ((MoveExp >> 16) & 0x80) | ((RealMant >> 16) & 0x7F);
-		*(bytes + 2) |= (RealMant >> 8) & 0xFF;
-		*(bytes + 3) |= RealMant & 0xFF;
-	}
+        if (RealExp > 24) {
+            RealMant >>= RealExp - 24;
+        } else {
+            RealMant <<= 24 - RealExp;
+        }
+        RealExp -= FIXOFFS;
+        RealExp += 126;
+
+        MoveExp = RealExp << 23;
+        *bytes |= (MoveExp >> 24) & 0x7F;
+        *(bytes + 1) |= ((MoveExp >> 16) & 0x80) | ((RealMant >> 16) & 0x7F);
+        *(bytes + 2) |= (RealMant >> 8) & 0xFF;
+        *(bytes + 3) |= RealMant & 0xFF;
+    }
 }

@@ -20,27 +20,27 @@
    version number has been printed; `optind', the current option index;
    `argc'; `argv'.  */
 
-#define FINISH_COMMAND_LINE()						\
-  do									\
-    {									\
-      /* Just wanted to know the version number?  */			\
-      if (printed_version && optind == argc) exit (0);			\
+#define FINISH_COMMAND_LINE()                        \
+  do                                    \
+    {                                    \
+      /* Just wanted to know the version number?  */            \
+      if (printed_version && optind == argc) exit (0);            \
                                                                         \
-      /* Exactly one (non-empty) argument left?  */			\
-      if (optind + 1 == argc && *argv[optind] != 0)			\
-        {								\
-          return (argv[optind]);					\
-        }								\
-      else								\
-        {								\
+      /* Exactly one (non-empty) argument left?  */            \
+      if (optind + 1 == argc && *argv[optind] != 0)            \
+        {                                \
+          return (argv[optind]);                    \
+        }                                \
+      else                                \
+        {                                \
           fprintf (stderr, "Usage: %s [options] <image_name>.\n", argv[0]);\
           fprintf (stderr, "(%s.)\n", optind == argc ? "Missing <image_name>"\
-                                      : "Too many <image_name>s");	\
-          fputs ("For more information, use ``-help''.\n", stderr);	\
-          exit (1);							\
-        }								\
-      return NULL; /* stop warnings */					\
-    }									\
+                                      : "Too many <image_name>s");    \
+          fputs ("For more information, use ``-help''.\n", stderr);    \
+          exit (1);                            \
+        }                                \
+      return NULL; /* stop warnings */                    \
+    }                                    \
   while (0)
 
 #define GETOPT_USAGE \

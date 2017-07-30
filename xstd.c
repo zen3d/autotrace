@@ -8,37 +8,32 @@
 #include <errno.h>
 
 FILE *
-xfopen (at_string filename, at_string mode)
-{
-  FILE *f;
+xfopen(at_string filename, at_string mode) {
+    FILE *f;
 
-  if (strcmp(filename, "-") == 0)
-    f = stdin;
-  else
-    {
-      f = fopen (filename, mode);
-      if (f == NULL)
-	FATAL_PERROR (filename);
+    if (strcmp(filename, "-") == 0)
+        f = stdin;
+    else {
+        f = fopen(filename, mode);
+        if (f == NULL)
+            FATAL_PERROR (filename);
     }
 
-  return f;
+    return f;
 }
 
 
 void
-xfclose (FILE *f, at_string filename)
-{
-  if (f != stdin)
-    {
-      if (fclose (f) == EOF)
-	FATAL_PERROR (filename);
+xfclose(FILE *f, at_string filename) {
+    if (f != stdin) {
+        if (fclose(f) == EOF)
+            FATAL_PERROR (filename);
     }
 }
 
 void
-xfseek (FILE *f, long offset, int wherefrom, at_string filename)
-{
-  if (fseek (f, offset, wherefrom) < 0)
-    FATAL_PERROR (filename);
+xfseek(FILE *f, long offset, int wherefrom, at_string filename) {
+    if (fseek(f, offset, wherefrom) < 0)
+        FATAL_PERROR (filename);
 }
 

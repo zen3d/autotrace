@@ -23,7 +23,9 @@
 #ifndef __cplusplus
 /* Booleans.  */
 #ifndef bool
-typedef enum { false = 0, true = 1 } at_bool;
+typedef enum {
+    false = 0, true = 1
+} at_bool;
 #else
 #define at_bool bool
 #endif
@@ -45,14 +47,12 @@ typedef void *at_address;
 typedef float at_real;
 
 /* Cartesian points.  */
-typedef struct _at_coord
-{
-  unsigned short x, y;
+typedef struct _at_coord {
+    unsigned short x, y;
 } at_coord;
 
-typedef struct _at_real_coord
-{
-  at_real x, y, z;
+typedef struct _at_real_coord {
+    at_real x, y, z;
 } at_real_coord;
 
 #ifdef __cplusplus

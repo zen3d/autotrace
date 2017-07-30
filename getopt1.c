@@ -22,10 +22,9 @@
 #include "getopt.h"
 
 int
-getopt_long (int argc, char *const *argv, const char *options,
-  const struct option *long_options, int *opt_index)
-{
-  return _getopt_internal (argc, argv, options, long_options, opt_index, 0);
+getopt_long(int argc, char *const *argv, const char *options,
+            const struct option *long_options, int *opt_index) {
+    return _getopt_internal(argc, argv, options, long_options, opt_index, 0);
 }
 
 /* Like getopt_long, but '-' as well as '--' can indicate a long option.
@@ -34,9 +33,8 @@ getopt_long (int argc, char *const *argv, const char *options,
    instead.  */
 
 int
-getopt_long_only (int argc, char *const *argv, const char *options,
-  const struct option *long_options, int *opt_index)
-{
-  return _getopt_internal (argc, argv, options, long_options, opt_index, 1);
+getopt_long_only(int argc, char *const *argv, const char *options,
+                 const struct option *long_options, int *opt_index) {
+    return _getopt_internal(argc, argv, options, long_options, opt_index, 1);
 }
 

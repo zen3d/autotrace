@@ -24,9 +24,9 @@
 
 #include "input.h"
 
-at_bitmap_type input_png_reader (at_string filename,
-				 at_input_opts_type * opts,
-				 at_msg_func msg_func, 
-				 at_address msg_data);
+at_bitmap_type input_png_reader(at_string filename,
+                                at_input_opts_type *opts,
+                                at_msg_func msg_func,
+                                at_address msg_data);
 
 #endif /* not INPUT_PNG_H */

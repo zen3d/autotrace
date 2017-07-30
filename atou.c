@@ -8,13 +8,12 @@
 #include "atou.h"
 
 unsigned
-atou (at_string s)
-{
-  int i = atoi (s);
+atou(at_string s) {
+    int i = atoi(s);
 
-  if (i < 0)
-    FATAL1 ("I expected a positive number, not %d", i);
+    if (i < 0)
+        FATAL1 ("I expected a positive number, not %d", i);
 
-  return (unsigned) i;
+    return (unsigned) i;
 }
 

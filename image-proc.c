@@ -31,8 +31,7 @@ static void check(int v1, int v2, int v3, struct etyp *t);
    every non-target point to the nearest target point. */
 
 distance_map_type
-new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded, at_exception_type * exp)
-{
+new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded, at_exception_type *exp) {
     signed x, y;
     float d, min;
     distance_map_type dist;
@@ -41,61 +40,54 @@ new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded,
     unsigned h = BITMAP_HEIGHT(bitmap);
     unsigned spp = BITMAP_PLANES(bitmap);
 
-    dist.height = h; dist.width = w;
-    XMALLOC(dist.d, h * sizeof(float*));
-    XMALLOC(dist.weight, h * sizeof(float*));
-    for (y = 0; y < (signed) h; y++)
-    {
-      XCALLOC(dist.d[y], w * sizeof(float));
-      XMALLOC(dist.weight[y], w * sizeof(float));
+    dist.height = h;
+    dist.width = w;
+    XMALLOC(dist.d, h * sizeof(float *));
+    XMALLOC(dist.weight, h * sizeof(float *));
+    for (y = 0; y < (signed) h; y++) {
+        XCALLOC(dist.d[y], w * sizeof(float));
+        XMALLOC(dist.weight[y], w * sizeof(float));
     }
 
-    if (spp == 3)
-    {
-      for (y = 0; y < (signed) h; y++)
-      {
-        for (x = 0; x < (signed) w; x++, b += spp)
-        {
-          int gray; float fgray;
-          gray = (int)LUMINANCE(b[0], b[1], b[2]);
-          dist.d[y][x] = (gray == target_value ? 0.0F : 1.0e10F);
-          fgray = gray * 0.0039215686F;  /* = gray / 255.0F */
-          dist.weight[y][x] = 1.0F - fgray;
+    if (spp == 3) {
+        for (y = 0; y < (signed) h; y++) {
+            for (x = 0; x < (signed) w; x++, b += spp) {
+                int gray;
+                float fgray;
+                gray = (int) LUMINANCE(b[0], b[1], b[2]);
+                dist.d[y][x] = (gray == target_value ? 0.0F : 1.0e10F);
+                fgray = gray * 0.0039215686F;  /* = gray / 255.0F */
+                dist.weight[y][x] = 1.0F - fgray;
 /*        dist.weight[y][x] = 1.0F - (fgray * fgray);*/
 /*        dist.weight[y][x] = (fgray < 0.5F ? 1.0F - fgray : -2.0F * fgray * (fgray - 1.0F));*/
-	    }
-      }
+            }
+        }
     }
-    else
-    {
-      for (y = 0; y < (signed) h; y++)
-      {
-        for (x = 0; x < (signed) w; x++, b += spp)
-        {
-          int gray; float fgray;
-          gray = b[0];
-          dist.d[y][x] = (gray == target_value ? 0.0F : 1.0e10F);
-          fgray = gray * 0.0039215686F;  /* = gray / 255.0F */
-          dist.weight[y][x] = 1.0F - fgray;
+    else {
+        for (y = 0; y < (signed) h; y++) {
+            for (x = 0; x < (signed) w; x++, b += spp) {
+                int gray;
+                float fgray;
+                gray = b[0];
+                dist.d[y][x] = (gray == target_value ? 0.0F : 1.0e10F);
+                fgray = gray * 0.0039215686F;  /* = gray / 255.0F */
+                dist.weight[y][x] = 1.0F - fgray;
 /*        dist.weight[y][x] = 1.0F - (fgray * fgray);*/
 /*        dist.weight[y][x] = (fgray < 0.5F ? 1.0F - fgray : -2.0F * fgray * (fgray - 1.0F)); */
+            }
         }
-      }
     }
 
     /* If the image is padded then border points are all at most
        one unit away from the nearest target point. */
-    if (padded)
-    {
-        for (y = 0; y < (signed) h; y++)
-        {
+    if (padded) {
+        for (y = 0; y < (signed) h; y++) {
             if (dist.d[y][0] > dist.weight[y][0])
                 dist.d[y][0] = dist.weight[y][0];
             if (dist.d[y][w - 1] > dist.weight[y][w - 1])
                 dist.d[y][w - 1] = dist.weight[y][w - 1];
         }
-        for (x = 0; x < (signed) w; x++)
-        {
+        for (x = 0; x < (signed) w; x++) {
             if (dist.d[0][x] > dist.weight[0][x])
                 dist.d[0][x] = dist.weight[0][x];
             if (dist.d[h - 1][x] > dist.weight[h - 1][x])
@@ -111,10 +103,8 @@ new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded,
        sqrt(2) or one) multiplied by the central point's weight
        (derived from its gray level).  Replace the distance already
        stored at the central point if the new distance is smaller. */
-    for (y = 1; y < (signed) h; y++)
-    {
-        for (x = 1; x < (signed) w; x++)
-        {
+    for (y = 1; y < (signed) h; y++) {
+        for (x = 1; x < (signed) w; x++) {
             if (dist.d[y][x] == 0.0F) continue;
 
             min = dist.d[y][x];
@@ -132,8 +122,7 @@ new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded,
             if (d < min) min = dist.d[y][x] = d;
 
             /* upper-right neighbor (except at the last column) */
-            if (x + 1 < (signed) w)
-            {
+            if (x + 1 < (signed) w) {
                 d = dist.d[y - 1][x + 1] + (float) M_SQRT2 * dist.weight[y][x];
                 if (d < min) min = dist.d[y][x] = d;
             }
@@ -141,27 +130,24 @@ new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded,
     }
 
     /* Same as above, but now scanning right to left, bottom to top. */
-    for (y = h - 2; y >= 0; y--)
-    {
-        for (x = w - 2; x >= 0; x--)
-        {
+    for (y = h - 2; y >= 0; y--) {
+        for (x = w - 2; x >= 0; x--) {
             min = dist.d[y][x];
 
             /* lower-right neighbor */
             d = dist.d[y + 1][x + 1] + (float) M_SQRT2 * dist.weight[y][x];
-	        if (d < min) min = dist.d[y][x] = d;
+            if (d < min) min = dist.d[y][x] = d;
 
             /* lower neighbor */
             d = dist.d[y + 1][x] + dist.weight[y][x];
-	        if (d < min) min = dist.d[y][x] = d;
+            if (d < min) min = dist.d[y][x] = d;
 
             /* right neighbor */
             d = dist.d[y][x + 1] + dist.weight[y][x];
-	        if (d < min) min = dist.d[y][x] = d;
+            if (d < min) min = dist.d[y][x] = d;
 
             /* lower-left neighbor (except at the first column) */
-            if (x - 1 >= 0)
-            {
+            if (x - 1 >= 0) {
                 d = dist.d[y + 1][x - 1] + (float) M_SQRT2 * dist.weight[y][x];
                 if (d < min) min = dist.d[y][x] = d;
             }
@@ -174,25 +160,22 @@ new_distance_map(bitmap_type bitmap, unsigned char target_value, at_bool padded,
 /* Free the dynamically-allocated storage associated with a distance map. */
 
 void
-free_distance_map(distance_map_type *dist)
-{
+free_distance_map(distance_map_type *dist) {
     unsigned y, h;
 
     if (!dist) return;
 
     h = BITMAP_HEIGHT(*dist);
 
-    if (dist->d != NULL)
-    {
-	for (y = 0; y < h; y++)
-	    free((at_address*)dist->d[y]);
-        free((at_address*)dist->d);
+    if (dist->d != NULL) {
+        for (y = 0; y < h; y++)
+            free((at_address *) dist->d[y]);
+        free((at_address *) dist->d);
     }
-    if (dist->weight != NULL)
-    {
-	for (y = 0; y < h; y++)
-	    free((at_address*)dist->weight[y]);
-        free((at_address*)dist->weight);
+    if (dist->weight != NULL) {
+        for (y = 0; y < h; y++)
+            free((at_address *) dist->weight[y]);
+        free((at_address *) dist->weight);
     }
 }
 
@@ -235,44 +218,44 @@ medial_axis(bitmap_type *bitmap, distance_map_type *dist,
 
     for (x = 1; x < w - 1; x++)
     {
-	    f = d[0][x] + 0.5;
-	    test = (f < d[0][x-1]) + (f < d[0][x+1]) + (f < d[1][x-1])
-	        + (f < d[1][x]) + (f < d[1][x+1]);
-	    if (test > 1) b[x] = bg.r;
+        f = d[0][x] + 0.5;
+        test = (f < d[0][x-1]) + (f < d[0][x+1]) + (f < d[1][x-1])
+            + (f < d[1][x]) + (f < d[1][x+1]);
+        if (test > 1) b[x] = bg.r;
     }
     b += w;
 
     for (y = 1; y < h - 1; y++)
     {
-	    f = d[y][0] + 0.5;
-	    test = (f < d[y-1][0]) + (f < d[y-1][1]) + (f < d[y][1])
-	        + (f < d[y+1][0]) + (f < d[y+1][1]);
-	    if (test > 1) b[0] = bg.r;
+        f = d[y][0] + 0.5;
+        test = (f < d[y-1][0]) + (f < d[y-1][1]) + (f < d[y][1])
+            + (f < d[y+1][0]) + (f < d[y+1][1]);
+        if (test > 1) b[0] = bg.r;
 
-	    for (x = 1; x < w - 1; x++)
-		{
-	        f = d[y][x] + 0.5;
-	        test = (f < d[y-1][x-1]) + (f < d[y-1][x]) + (f < d[y-1][x+1])
-		    + (f < d[y][x-1]) + (f < d[y][x+1])
-		    + (f < d[y+1][x-1]) + (f < d[y+1][x]) + (f < d[y+1][x+1]);
-	        if (test > 1) b[x] = bg.r;
-		}
+        for (x = 1; x < w - 1; x++)
+        {
+            f = d[y][x] + 0.5;
+            test = (f < d[y-1][x-1]) + (f < d[y-1][x]) + (f < d[y-1][x+1])
+            + (f < d[y][x-1]) + (f < d[y][x+1])
+            + (f < d[y+1][x-1]) + (f < d[y+1][x]) + (f < d[y+1][x+1]);
+            if (test > 1) b[x] = bg.r;
+        }
 
-	    f = d[y][w-1] + 0.5;
-	    test = (f < d[y-1][w-1]) + (f < d[y-1][w-2]) + (f < d[y][w-2])
-	        + (f < d[y+1][w-1]) + (f < d[y+1][w-2]);
-	    if (test > 1)
-	        b[w-1] = bg.r;
+        f = d[y][w-1] + 0.5;
+        test = (f < d[y-1][w-1]) + (f < d[y-1][w-2]) + (f < d[y][w-2])
+            + (f < d[y+1][w-1]) + (f < d[y+1][w-2]);
+        if (test > 1)
+            b[w-1] = bg.r;
 
         b += w;
     }
 
     for (x = 1; x < w - 1; x++)
     {
-	    f = d[h-1][x] + 0.5;
-	    test = (f < d[h-1][x-1]) + (f < d[h-1][x+1])
-	        + (f < d[h-2][x-1]) + (f < d[h-2][x]) + (f < d[h-2][x+1]);
-	    if (test > 1) b[x] = bg.r;
+        f = d[h-1][x] + 0.5;
+        test = (f < d[h-1][x-1]) + (f < d[h-1][x+1])
+            + (f < d[h-2][x-1]) + (f < d[h-2][x]) + (f < d[h-2][x+1]);
+        if (test > 1) b[x] = bg.r;
     }
 
     f = d[h-1][0] + 0.5;
@@ -289,8 +272,7 @@ medial_axis(bitmap_type *bitmap, distance_map_type *dist,
 /* Binarize a grayscale or color image. */
 
 void
-binarize(bitmap_type *bitmap)
-{
+binarize(bitmap_type *bitmap) {
     unsigned i, npixels, spp;
     unsigned char *b;
 
@@ -301,25 +283,21 @@ binarize(bitmap_type *bitmap)
     spp = BITMAP_PLANES(*bitmap);
     npixels = BITMAP_WIDTH(*bitmap) * BITMAP_HEIGHT(*bitmap);
 
-    if (spp == 1)
-    {
-	    for (i = 0; i < npixels; i++)
-	        b[i] = (b[i] > GRAY_THRESHOLD ? WHITE : BLACK);
+    if (spp == 1) {
+        for (i = 0; i < npixels; i++)
+            b[i] = (b[i] > GRAY_THRESHOLD ? WHITE : BLACK);
     }
-    else if (spp == 3)
-    {
-	    unsigned char *rgb = b;
-	    for (i = 0; i < npixels; i++, rgb += 3)
-		{
-	        b[i] = (LUMINANCE(rgb[0], rgb[1], rgb[2]) > GRAY_THRESHOLD
-		        ? WHITE : BLACK);
-		}
-	    XREALLOC(BITMAP_BITS(*bitmap), npixels);
-	    BITMAP_PLANES(*bitmap) = 1;
+    else if (spp == 3) {
+        unsigned char *rgb = b;
+        for (i = 0; i < npixels; i++, rgb += 3) {
+            b[i] = (LUMINANCE(rgb[0], rgb[1], rgb[2]) > GRAY_THRESHOLD
+                    ? WHITE : BLACK);
+        }
+        XREALLOC(BITMAP_BITS(*bitmap), npixels);
+        BITMAP_PLANES(*bitmap) = 1;
     }
-    else
-    {
-	    WARNING1("binarize: %u-plane images are not supported", spp);
+    else {
+        WARNING1("binarize: %u-plane images are not supported", spp);
     }
 }
 
@@ -340,9 +318,9 @@ ip_thin(bitmap_type input_b)
 
     if (BITMAP_PLANES(input_b) != 1)
     {
-	    FATAL1("thin: single-plane image required; "
-	        "%u-plane images cannot be thinned", BITMAP_PLANES(input_b));
-	    return b;
+        FATAL1("thin: single-plane image required; "
+            "%u-plane images cannot be thinned", BITMAP_PLANES(input_b));
+        return b;
     }
 
     /* Process and return a copy of the input image. */
@@ -351,130 +329,130 @@ ip_thin(bitmap_type input_b)
 
     /* Set background pixels to zero, foreground pixels to one. */
     for (i = 0; i < num_bytes; i++)
-	b.bitmap[i] = (b.bitmap[i] == BLACK ? 1 : 0);
+    b.bitmap[i] = (b.bitmap[i] == BLACK ? 1 : 0);
 
     again = true;
     while (again)
     {
-	again = false;
+    again = false;
 
-	for (y = 1; y < h - 1; y++)
-	{
-	    for (x = 1; x < w - 1; x++)
-	    {
-		    /* During processing, pixels are used to store edge
-		       type codes, so we can't just test for WHITE or BLACK. */
-		    if (*BITMAP_PIXEL(b, y, x) == 0) continue;
+    for (y = 1; y < h - 1; y++)
+    {
+        for (x = 1; x < w - 1; x++)
+        {
+            /* During processing, pixels are used to store edge
+               type codes, so we can't just test for WHITE or BLACK. */
+            if (*BITMAP_PIXEL(b, y, x) == 0) continue;
 
-		    k = (!get_edge(b, y, x, &t)
-		        || (get_edge(b, y, x+1, &t) && *BITMAP_PIXEL(b, y-1, x)
-			    && *BITMAP_PIXEL(b, y+1, x))
-		        || (get_edge(b, y+1, x, &t) && *BITMAP_PIXEL(b, y, x-1)
-			    && *BITMAP_PIXEL(b, y, x+1))
-		        || (get_edge(b, y, x+1, &t) && get_edge(b, y+1, x+1, &t)
-			    && get_edge(b, y+1, x, &t)));
-		    if (k) continue;
+            k = (!get_edge(b, y, x, &t)
+                || (get_edge(b, y, x+1, &t) && *BITMAP_PIXEL(b, y-1, x)
+                && *BITMAP_PIXEL(b, y+1, x))
+                || (get_edge(b, y+1, x, &t) && *BITMAP_PIXEL(b, y, x-1)
+                && *BITMAP_PIXEL(b, y, x+1))
+                || (get_edge(b, y, x+1, &t) && get_edge(b, y+1, x+1, &t)
+                && get_edge(b, y+1, x, &t)));
+            if (k) continue;
 
-		    get_edge(b, y, x, &t);
-		    if (t.t01) *BITMAP_PIXEL(b, y, x) |= 4;
-		    *BITMAP_PIXEL(b, y, x) |= 2;
-		    again = true;
-	    }
-	}
+            get_edge(b, y, x, &t);
+            if (t.t01) *BITMAP_PIXEL(b, y, x) |= 4;
+            *BITMAP_PIXEL(b, y, x) |= 2;
+            again = true;
+        }
+    }
 
-	for (y = 0; y < h; y++)
-	    for (x = 0; x < w; x++)
-		    if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
+    for (y = 0; y < h; y++)
+        for (x = 0; x < w; x++)
+            if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
 
-	for (y = 1; y < h - 1; y++)
-	{
-	    for (x = 1; x < w - 1; x++)
-	    {
-		    if (*BITMAP_PIXEL(b, y, x) == 0) continue;
+    for (y = 1; y < h - 1; y++)
+    {
+        for (x = 1; x < w - 1; x++)
+        {
+            if (*BITMAP_PIXEL(b, y, x) == 0) continue;
 
-		    k = (!get_edge(b, y, x, &t)
-		        || ((*BITMAP_PIXEL(b, y, x) & 04) == 0)
-		        || (get_edge(b, y+1, x, &t) && (*BITMAP_PIXEL(b, y, x-1))
-			    && *BITMAP_PIXEL(b, y, x+1))
-		        || (get_edge(b, y, x+1, &t) && *BITMAP_PIXEL(b, y-1, x)
-			    && *BITMAP_PIXEL(b, y+1, x))
-		        || (get_edge(b, y+1, x, &t) && get_edge(b, y, x+1, &t)
-			    && get_edge(b, y+1, x+1, &t)));
-		    if (k) continue;
+            k = (!get_edge(b, y, x, &t)
+                || ((*BITMAP_PIXEL(b, y, x) & 04) == 0)
+                || (get_edge(b, y+1, x, &t) && (*BITMAP_PIXEL(b, y, x-1))
+                && *BITMAP_PIXEL(b, y, x+1))
+                || (get_edge(b, y, x+1, &t) && *BITMAP_PIXEL(b, y-1, x)
+                && *BITMAP_PIXEL(b, y+1, x))
+                || (get_edge(b, y+1, x, &t) && get_edge(b, y, x+1, &t)
+                && get_edge(b, y+1, x+1, &t)));
+            if (k) continue;
 
-		    *BITMAP_PIXEL(b, y, x) |= 02;
-		    again = true;
-	    }
-	}
+            *BITMAP_PIXEL(b, y, x) |= 02;
+            again = true;
+        }
+    }
 
-	for (y = 0; y < h; y++)
-	{
-	    for (x = 0; x < w; x++)
-	    {
-		    if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
-		    else if (*BITMAP_PIXEL(b, y, x) > 0) *BITMAP_PIXEL(b, y, x) = 1;
-	    }
-	}
+    for (y = 0; y < h; y++)
+    {
+        for (x = 0; x < w; x++)
+        {
+            if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
+            else if (*BITMAP_PIXEL(b, y, x) > 0) *BITMAP_PIXEL(b, y, x) = 1;
+        }
+    }
     }
 
     /* Staircase removal; northward bias. */
     for (y = 1; y < h - 1; y++)
     {
-	    for (x = 1; x < w - 1; x++)
-		{
-	        if (*BITMAP_PIXEL(b, y, x) == 0) continue;
+        for (x = 1; x < w - 1; x++)
+        {
+            if (*BITMAP_PIXEL(b, y, x) == 0) continue;
 
-	        k = !(*BITMAP_PIXEL(b, y-1, x)
-		        && ((*BITMAP_PIXEL(b, y, x+1) && !*BITMAP_PIXEL(b, y-1, x+1)
-		        && !*BITMAP_PIXEL(b, y+1, x-1)
-		        && (!*BITMAP_PIXEL(b, y, x-1) || !*BITMAP_PIXEL(b, y+1, x)))
-		        || (*BITMAP_PIXEL(b, y, x-1) && !*BITMAP_PIXEL(b, y-1, x-1)
-		        && !*BITMAP_PIXEL(b, y+1, x+1) &&
-		        (!*BITMAP_PIXEL(b, y, x+1) || !*BITMAP_PIXEL(b, y+1, x)))));
-	        if (k) continue;
+            k = !(*BITMAP_PIXEL(b, y-1, x)
+                && ((*BITMAP_PIXEL(b, y, x+1) && !*BITMAP_PIXEL(b, y-1, x+1)
+                && !*BITMAP_PIXEL(b, y+1, x-1)
+                && (!*BITMAP_PIXEL(b, y, x-1) || !*BITMAP_PIXEL(b, y+1, x)))
+                || (*BITMAP_PIXEL(b, y, x-1) && !*BITMAP_PIXEL(b, y-1, x-1)
+                && !*BITMAP_PIXEL(b, y+1, x+1) &&
+                (!*BITMAP_PIXEL(b, y, x+1) || !*BITMAP_PIXEL(b, y+1, x)))));
+            if (k) continue;
 
-	        *BITMAP_PIXEL(b, y, x) |= 02;
-		}
+            *BITMAP_PIXEL(b, y, x) |= 02;
+        }
     }
     for (y = 0; y < h; y++)
     {
-	    for (x = 0; x < w; x++)
-		{
-	        if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
-	        else if (*BITMAP_PIXEL(b, y, x) > 0) *BITMAP_PIXEL(b, y, x) = 1;
-		}
+        for (x = 0; x < w; x++)
+        {
+            if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
+            else if (*BITMAP_PIXEL(b, y, x) > 0) *BITMAP_PIXEL(b, y, x) = 1;
+        }
     }
 
     /* Southward bias */
     for (y = 1; y < h - 1; y++)
     {
-	    for (x = 1; x < w - 1; x++)
-		{
-	        if (*BITMAP_PIXEL(b, y, x) == 0) continue;
+        for (x = 1; x < w - 1; x++)
+        {
+            if (*BITMAP_PIXEL(b, y, x) == 0) continue;
 
-	        k = !(*BITMAP_PIXEL(b, y+1, x)
-		    && ((*BITMAP_PIXEL(b, y, x+1) && !*BITMAP_PIXEL(b, y+1, x+1)
-		    && !*BITMAP_PIXEL(b, y-1, x-1) && (!*BITMAP_PIXEL(b, y, x-1)
-		    || !*BITMAP_PIXEL(b, y-1, x))) || (*BITMAP_PIXEL(b, y, x-1)
-		    && !*BITMAP_PIXEL(b, y+1, x-1) && !*BITMAP_PIXEL(b, y-1, x+1)
-		    && (!*BITMAP_PIXEL(b, y, x+1) || !*BITMAP_PIXEL(b, y-1, x)) )));
-	        if (k) continue;
+            k = !(*BITMAP_PIXEL(b, y+1, x)
+            && ((*BITMAP_PIXEL(b, y, x+1) && !*BITMAP_PIXEL(b, y+1, x+1)
+            && !*BITMAP_PIXEL(b, y-1, x-1) && (!*BITMAP_PIXEL(b, y, x-1)
+            || !*BITMAP_PIXEL(b, y-1, x))) || (*BITMAP_PIXEL(b, y, x-1)
+            && !*BITMAP_PIXEL(b, y+1, x-1) && !*BITMAP_PIXEL(b, y-1, x+1)
+            && (!*BITMAP_PIXEL(b, y, x+1) || !*BITMAP_PIXEL(b, y-1, x)) )));
+            if (k) continue;
 
-	        *BITMAP_PIXEL(b, y, x) |= 02;
-		}
+            *BITMAP_PIXEL(b, y, x) |= 02;
+        }
     }
     for (y = 0; y < h; y++)
     {
-	    for (x = 0; x < w; x++)
-		{
-	        if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
-	        else if (*BITMAP_PIXEL(b, y, x) > 0) *BITMAP_PIXEL(b, y, x) = 1;
-		}
+        for (x = 0; x < w; x++)
+        {
+            if (*BITMAP_PIXEL(b, y, x) & 02) *BITMAP_PIXEL(b, y, x) = 0;
+            else if (*BITMAP_PIXEL(b, y, x) > 0) *BITMAP_PIXEL(b, y, x) = 1;
+        }
     }
 
     /* Set background pixels to WHITE, foreground pixels to BLACK. */
     for (i = 0; i < num_bytes; i++)
-	b.bitmap[i] = (b.bitmap[i] == 0 ? WHITE : BLACK);
+    b.bitmap[i] = (b.bitmap[i] == 0 ? WHITE : BLACK);
     return b;
 }
 
@@ -483,13 +461,13 @@ at_bool get_edge(bitmap_type b, int y, int x, struct etyp *t)
 {
     t->t00 = 0; t->t01 = 0; t->t01s = 0; t->t11 = 0;
     check(*BITMAP_PIXEL(b, y - 1, x - 1), *BITMAP_PIXEL(b, y - 1, x),
-	*BITMAP_PIXEL(b, y - 1, x + 1), t);
+    *BITMAP_PIXEL(b, y - 1, x + 1), t);
     check(*BITMAP_PIXEL(b, y - 1, x + 1), *BITMAP_PIXEL(b, y, x + 1),
-	*BITMAP_PIXEL(b, y + 1, x + 1), t);
+    *BITMAP_PIXEL(b, y + 1, x + 1), t);
     check(*BITMAP_PIXEL(b, y + 1, x + 1), *BITMAP_PIXEL(b, y + 1, x),
-	*BITMAP_PIXEL(b, y + 1, x - 1), t);
+    *BITMAP_PIXEL(b, y + 1, x - 1), t);
     check(*BITMAP_PIXEL(b, y + 1, x - 1), *BITMAP_PIXEL(b, y, x - 1),
-	*BITMAP_PIXEL(b, y - 1, x - 1), t);
+    *BITMAP_PIXEL(b, y - 1, x - 1), t);
     return *BITMAP_PIXEL(b, y, x) && t->t00 && t->t11 && !t->t01s;
 }
 

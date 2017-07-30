@@ -19,6 +19,7 @@
 
 #ifndef INPUT_H
 #define INPUT_H
+
 #include "types.h"
 #include "autotrace.h"
 #include "exception.h"
@@ -32,9 +33,9 @@ extern "C" {
 
 /* at_input_add_handler
    Register an input handler to autotrace. */
-extern int at_input_add_handler (at_string suffix, 
-				 at_string description,
-				 at_input_read_func func);
+extern int at_input_add_handler(at_string suffix,
+                                at_string description,
+                                at_input_read_func func);
 
 /* at_bitmap_init
    Return initialized at_bitmap_type value.
@@ -56,10 +57,10 @@ extern int at_input_add_handler (at_string suffix,
    at_bitmap_new is for autotrace library user.
    at_bitmap_init is for input-handler developer.
    Don't use at_bitmap_new in your input-handler. */
-extern at_bitmap_type at_bitmap_init(unsigned char * area,
-				     unsigned short width,
-				     unsigned short height,
-				     unsigned int planes);
+extern at_bitmap_type at_bitmap_init(unsigned char *area,
+                                     unsigned short width,
+                                     unsigned short height,
+                                     unsigned int planes);
 
 /* TODO: free storage */
 
@@ -75,8 +76,8 @@ extern at_bitmap_type at_bitmap_init(unsigned char * area,
 #define AT_BITMAP_HEIGHT(b)  ((b).height)
 
 /* This is the pixel at [ROW,COL].  */
-#define AT_BITMAP_PIXEL(b, row, col)					\
-  ((AT_BITMAP_BITS (b) + (row) * AT_BITMAP_PLANES (b) * AT_BITMAP_WIDTH (b)	\
+#define AT_BITMAP_PIXEL(b, row, col)                    \
+  ((AT_BITMAP_BITS (b) + (row) * AT_BITMAP_PLANES (b) * AT_BITMAP_WIDTH (b)    \
         + (col) * AT_BITMAP_PLANES(b)))
 
 #ifdef __cplusplus

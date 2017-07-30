@@ -5,7 +5,7 @@
    abort if those routines fail. */
 
 #ifndef XSTD_H
-#define XSTD_H 
+#define XSTD_H
 
 #include "types.h"
 #include "message.h"
@@ -17,36 +17,36 @@
  * XMEM
  */
 #ifndef __cplusplus
-#define XMALLOC(new_mem, size)			\
-do						\
-  {						\
-    new_mem = (at_address) malloc (size);	\
-    assert(new_mem);				\
+#define XMALLOC(new_mem, size)            \
+do                        \
+  {                        \
+    new_mem = (at_address) malloc (size);    \
+    assert(new_mem);                \
   } while (0)
 
 
-#define XCALLOC(new_mem, size)			\
-do						\
-  {						\
-    new_mem = (at_address) calloc (size, 1);	\
-    assert(new_mem);				\
+#define XCALLOC(new_mem, size)            \
+do                        \
+  {                        \
+    new_mem = (at_address) calloc (size, 1);    \
+    assert(new_mem);                \
   } while (0)
 
 
-#define XREALLOC(old_ptr, size)				\
-do							\
-  {							\
-    at_address new_mem;					\
-							\
-    if (old_ptr == NULL)				\
-      XMALLOC (new_mem, size);				\
-    else						\
-      {							\
-        new_mem = (at_address) realloc (old_ptr, size);	\
-        assert(new_mem);				\
-      }							\
-							\
-    old_ptr = new_mem;					\
+#define XREALLOC(old_ptr, size)                \
+do                            \
+  {                            \
+    at_address new_mem;                    \
+                            \
+    if (old_ptr == NULL)                \
+      XMALLOC (new_mem, size);                \
+    else                        \
+      {                            \
+        new_mem = (at_address) realloc (old_ptr, size);    \
+        assert(new_mem);                \
+      }                            \
+                            \
+    old_ptr = new_mem;                    \
 } while (0)
 
 
@@ -71,7 +71,7 @@ do								\
 do									  \
   {									  \
     at_address new_mem;							  \
-									  \
+                                      \
     if (old_ptr == NULL)						  \
       XMALLOC (new_mem, (size));					  \
     else								  \
@@ -79,7 +79,7 @@ do									  \
         (at_address&) new_mem = (at_address) realloc ((old_ptr), (size)); \
         assert(new_mem);						  \
       }									  \
-									  \
+                                      \
     (at_address&)old_ptr = new_mem;					  \
   } while (0)
 #endif
@@ -89,8 +89,10 @@ do									  \
  */
 /* Like their stdio counterparts, but abort on error, after calling
    perror(3) with FILENAME as its argument.  */
-extern FILE *xfopen (at_string filename, at_string mode);
-extern void xfclose (FILE *, at_string filename);
-extern void xfseek (FILE *, long, int, at_string filename);
+extern FILE *xfopen(at_string filename, at_string mode);
+
+extern void xfclose(FILE *, at_string filename);
+
+extern void xfseek(FILE *, long, int, at_string filename);
 
 #endif /* Not XSTD_H */

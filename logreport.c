@@ -20,9 +20,8 @@ FILE *log_file = NULL;
 #endif
 
 void
-flush_log_output (void)
-{
-  if (log_file)
-    fflush (log_file);
+flush_log_output(void) {
+    if (log_file)
+        fflush(log_file);
 }
 
